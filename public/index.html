@@ -185,6 +185,37 @@ select.lang{height:32px;border:1px solid var(--stone);border-radius:6px;padding:
 .panel,.list{min-width:0}
 html,body{overflow-x:clip}
 @media(max-width:380px){.tabs button{font-size:11.5px!important;letter-spacing:-.02em}}   /* 2px 이하 반올림 넘침 숨김 (sticky 는 그대로 동작) */.list{overflow-wrap:break-word}
+/* 지도: 일반 / 위성 바꾸기 */
+.mtype{position:absolute;z-index:6;top:12px;right:12px;display:flex;gap:8px}
+.mtype[hidden]{display:none}
+.mtype button{width:54px;padding:0;border:0;background:none;cursor:pointer;position:relative}
+.mtype span{display:block;width:46px;height:46px;margin:0 auto;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.mt-road span{background:linear-gradient(115deg,transparent 44%,#fff 44% 52%,transparent 52%),linear-gradient(20deg,transparent 60%,#F6D58E 60% 66%,transparent 66%),linear-gradient(160deg,#E8EFE3 0 50%,#EEEAE1 50%)}
+.mt-sky span{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.75) 44% 49%,transparent 49%),radial-gradient(circle at 30% 30%,#6E8F5A 0 22%,transparent 23%),radial-gradient(circle at 70% 65%,#8C7B62 0 25%,transparent 26%),linear-gradient(160deg,#4F6B45,#3B4A3C)}
+.mtype button[aria-pressed="true"] span{border-color:#2B6CB0}
+.mtype button[aria-pressed="true"]::after{content:"✓";position:absolute;top:-2px;right:2px;width:18px;height:18px;border-radius:50%;background:#2B6CB0;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.mtype small{display:inline-block;margin-top:3px;padding:0 6px;border-radius:8px;background:rgba(255,255,255,.92);font-size:11px;font-weight:700;color:var(--giwa);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+#map.sky .ov{box-shadow:0 1px 6px rgba(0,0,0,.55);border-color:#fff}
+#map.sky .pin{box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.6)}
+/* 지도를 누른 곳 카드 */
+.pc-dot{width:14px;height:14px;border-radius:50%;background:var(--celadon);border:3px solid #fff;box-shadow:0 0 0 4px rgba(47,107,92,.25),0 1px 4px rgba(0,0,0,.4)}
+.pcard{position:absolute;z-index:7;left:12px;bottom:12px;width:min(360px,calc(100% - 24px));max-height:62%;overflow:auto;background:var(--paper);border:1px solid var(--stone);border-radius:12px;box-shadow:0 6px 24px rgba(38,56,74,.25);padding:14px 16px 12px}
+.pcard[hidden]{display:none}
+.pc-x{position:absolute;top:6px;right:8px;width:32px;height:32px;border:0;background:none;font-size:22px;line-height:1;color:var(--giwa-2);cursor:pointer}
+.pc-it{padding:8px 0;border-bottom:1px solid var(--stone-2)}.pc-it:last-child{border-bottom:0}
+.pc-it.big{padding-top:0;padding-right:28px}
+.pc-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}.pc-h b{font-size:14px}.pc-it.big .pc-h b{font-size:16.5px;font-family:var(--serif)}
+.pc-it small{display:block;font-size:12.5px;color:var(--giwa-2);margin-top:2px;overflow-wrap:anywhere}.pc-it small a{color:var(--celadon);font-weight:600}
+.pc-act{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px;font-size:13px}
+.pc-act a,.pc-act button{color:var(--celadon);font-weight:700;font-size:13px}
+.pc-act button{border:0;background:var(--celadon);color:#fff;border-radius:6px;padding:7px 12px;cursor:pointer}
+.pc-more{font-size:12px;color:var(--celadon)}
+.pc-sec{margin:10px 0 0;font-size:12px;font-weight:700;color:var(--giwa-2);letter-spacing:.02em}
+@media(max-width:950px){
+  .pcard{position:fixed;z-index:60;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));width:auto;max-height:46vh;border-radius:16px 16px 0 0;border-bottom:0;animation:pcup .22s ease-out}
+  .pcard::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--stone);margin:-6px auto 8px}
+}
+@keyframes pcup{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
 .srcl{font-size:11.5px;color:var(--giwa-2);margin:12px 0 0}
 .srcl a{color:var(--giwa-2)}
 .days{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:14px;margin:8px 0}
@@ -359,7 +390,7 @@ select.zone{display:block;width:100%;min-width:0}
     <div class="foot" id="foot"></div>
   </aside>
 
-  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div></section>
+  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div><div class="mtype" id="mtype" hidden></div><div class="pcard" id="pcard" hidden role="dialog"></div></section>
 
   <aside class="demo" aria-label="시연 조작판">
     <div>
@@ -1223,7 +1254,7 @@ function render(){
   tb.innerHTML=tabList.map(([i,lab])=>`<button role="tab" aria-selected="${i===S.tab}" onclick="setTab(${i})">${esc(lab)}</button>`).join("");
   document.querySelectorAll("#staySeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.stay===S.stay));
   document.querySelectorAll("#wSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.w===S.w));
-  renderList(); drawMarkers();
+  renderList(); drawMarkers(); renderMapType(); if(PC)renderPlaceCard();
 }
 function sortedSpots(){const st=STAYS[S.stay],bad=eff()!=="good";
   return SPOTS.map(s=>({...s,dist:km(st,s)})).sort((a,b)=>bad?(b.indoor-a.indoor)||(a.dist-b.dist):a.dist-b.dist);}
@@ -1457,6 +1488,7 @@ function loadKakao(){
   s.onload=()=>kakao.maps.load(()=>{
     map=new kakao.maps.Map(document.getElementById("kakaoMap"),{center:new kakao.maps.LatLng(37.5925,127.0020),level:5});
     ps=new kakao.maps.services.Places();
+    initMapExtras();
     mapMsg("");
     refineCoords().then(()=>{render();geocodeCent();});
     drawMarkers();geocodePolice();
@@ -1469,6 +1501,95 @@ function refineCoords(){
   const one=o=>new Promise(res=>ps.keywordSearch(o.q,(r,st)=>{
     if(st===kakao.maps.services.Status.OK&&r[0]){o.lat=+r[0].y;o.lng=+r[0].x;o.live=true;}res();},{location:center,radius:5000}));
   return Promise.all([...SPOTS,...FOOD].map(one));
+}
+// ---------- 지도 기능 (틈길 방식) ----------
+// 1) 지도를 누르면 그 자리의 장소 · 주소 카드  2) 일반지도 / 위성지도 바꾸기
+// 카카오 JavaScript 키 하나로 services(Places · Geocoder) 사용 — 키는 기존 /api/config 방식 그대로
+const T11={
+ en:{here:"Selected spot",inBld:"In this building",near:"Nearby",road:"Road address",jibun:"Lot address",kakao:"View on Kakao Map",route:"Route from my stay",dir:"Kakao Map directions",
+  close:"Close",none:"No places found nearby.",away:"from the tapped spot",map:"Map",sky:"Satellite",tel:"Phone",loading:"Looking up this spot…"},
+ zh:{here:"所选位置",inBld:"这栋建筑里的地方",near:"附近",road:"道路名地址",jibun:"地番地址",kakao:"在 Kakao Map 查看",route:"从住宿出发的路线",dir:"Kakao Map 路线",
+  close:"关闭",none:"附近没有找到地点。",away:"距点击位置",map:"地图",sky:"卫星",tel:"电话",loading:"正在查询这个位置…"},
+ ja:{here:"選んだ場所",inBld:"この建物にある場所",near:"近く",road:"道路名住所",jibun:"地番住所",kakao:"Kakao Map で見る",route:"宿泊先からのルート",dir:"Kakao Map で道案内",
+  close:"閉じる",none:"近くに場所が見つかりません。",away:"タップした場所から",map:"地図",sky:"航空写真",tel:"電話",loading:"この場所を調べています…"},
+ ko:{here:"선택한 곳",inBld:"이 건물에 있는 곳",near:"근처",road:"도로명",jibun:"지번",kakao:"카카오맵에서 보기",route:"숙소에서 가는 길",dir:"카카오맵 길찾기",
+  close:"닫기",none:"근처에서 찾은 장소가 없어요.",away:"누른 곳에서",map:"일반지도",sky:"위성지도",tel:"전화",loading:"이 자리를 찾아보는 중…"}
+};
+const PCAT={FD6:["Restaurant","餐厅","飲食店","음식점"],CE7:["Café","咖啡店","カフェ","카페"],CS2:["Convenience store","便利店","コンビニ","편의점"],MT1:["Supermarket","大型超市","スーパー","대형마트"],
+ PM9:["Pharmacy","药店","薬局","약국"],HP8:["Hospital · clinic","医院","病院","병원"],BK9:["Bank","银行","銀行","은행"],AC5:["Academy","补习班","塾・教室","학원"],SC4:["School","学校","学校","학교"],
+ PO3:["Public office","公共机关","公共機関","공공기관"],CT1:["Culture","文化设施","文化施設","문화시설"],AT4:["Attraction","景点","観光スポット","관광명소"],AD5:["Lodging","住宿","宿泊","숙박"],
+ SW8:["Subway station","地铁站","地下鉄駅","지하철역"],PK6:["Parking","停车场","駐車場","주차장"],OL7:["Gas station","加油站","ガソリンスタンド","주유소"],AG2:["Real estate agent","房地产中介","不動産","중개업소"],PS3:["Daycare","幼儿园","保育園","어린이집"]};
+const pcat=c=>{const a=PCAT[c];return a?a[{en:0,zh:1,ja:2,ko:3}[S.lang]]:"";};
+let pcOv=null,pcDot=null,pcSeq=0,PC=null,geocoder=null;
+function mppAt(ll){   // 화면 1픽셀 = 몇 m
+  const pr=map.getProjection(),p=pr.containerPointFromCoords(ll),q=pr.coordsFromContainerPoint(new kakao.maps.Point(p.x+1,p.y));
+  return km({lat:ll.getLat(),lng:ll.getLng()},{lat:q.getLat(),lng:q.getLng()})*1000;
+}
+function closePlaceCard(){pcSeq++;PC=null;if(pcDot){pcDot.setMap(null);pcDot=null;}document.getElementById("pcard").hidden=true;}
+function showPlaceCard(ll){
+  if(!document.getElementById("pcard").hidden){closePlaceCard();return;}   // 열려 있으면 빈 곳을 다시 누를 때 닫기
+  const seq=++pcSeq,pr=map.getProjection(),tap=pr.containerPointFromCoords(ll),at={lat:ll.getLat(),lng:ll.getLng()};
+  const radius=Math.round(Math.min(300,Math.max(40,mppAt(ll)*90)));
+  if(pcDot)pcDot.setMap(null);
+  pcDot=new kakao.maps.CustomOverlay({map,position:ll,content:'<div class="pc-dot"></div>',yAnchor:.5,xAnchor:.5,zIndex:30});
+  PC={at,loading:true};renderPlaceCard();
+  const opt={location:ll,radius,sort:kakao.maps.services.SortBy.DISTANCE,size:5};
+  const cat=c=>new Promise(res=>ps.categorySearch(c,(r,st)=>res(st===kakao.maps.services.Status.OK?r:[]),opt));
+  const addr=new Promise(res=>{geocoder=geocoder||new kakao.maps.services.Geocoder();geocoder.coord2Address(at.lng,at.lat,(r,st)=>res(st===kakao.maps.services.Status.OK&&r[0]?r[0]:null));});
+  Promise.all([...Object.keys(PCAT).map(cat),addr]).then(all=>{
+    if(seq!==pcSeq)return;
+    const a=all.pop(),seen=new Set(),list=[];
+    all.flat().forEach(p=>{if(seen.has(p.id))return;seen.add(p.id);p.lat=+p.y;p.lng=+p.x;p.dm=km(at,p)*1000;list.push(p);});
+    list.sort((x,y)=>x.dm-y.dm);
+    // 무엇을 눌렀나: 장소 아이콘 12px 안, 또는 아이콘 오른쪽 이름 글자 영역
+    const hit=list.find(p=>{const c=pr.containerPointFromCoords(new kakao.maps.LatLng(p.lat,p.lng)),dx=tap.x-c.x,dy=tap.y-c.y;
+      return Math.hypot(dx,dy)<=12||(dx>=8&&dx<=8+p.place_name.length*12&&Math.abs(dy)<=10);});
+    const road=a&&a.road_address?a.road_address.address_name:"",bld=a&&a.road_address?a.road_address.building_name:"",jibun=a&&a.address?a.address.address_name:"";
+    const nr=x=>String(x||"").replace(/^서울(특별시|시)?\s*/,"").replace(/\s+/g," ").trim();   // 「서울특별시 …」·「서울 …」 표기 차이 맞춤
+    const inBld=road?list.filter(p=>p!==hit&&p.road_address_name&&nr(p.road_address_name)===nr(road)):[];
+    const rest=list.filter(p=>p!==hit&&!inBld.includes(p)).slice(0,8);
+    PC={at,hit,road,bld,jibun,inBld,rest};renderPlaceCard();
+  });
+}
+function pcItem(p,big){
+  const v=T11[S.lang],d=p.dm<1000?Math.round(p.dm)+" m":(p.dm/1000).toFixed(1)+" km";
+  const name=showKo()?esc(p.place_name):withRoman(p.place_name);
+  return `<div class="pc-it${big?" big":""}"><div class="pc-h"><b>${name}</b>${pcat(p.category_group_code)?`<span class="chip">${esc(pcat(p.category_group_code))}</span>`:""}</div>
+    <small>${esc(p.road_address_name||p.address_name)} · ${d} ${esc(v.away)}${p.phone?` · <a href="tel:${p.phone.replace(/[^0-9]/g,"")}">${esc(p.phone)}</a>`:""}</small>
+    ${big?`<div class="pc-act"><a href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)}</a><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.place_name).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(p.place_name,p.lat,p.lng)}</div>`:`<a class="pc-more" href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)} ↗</a>`}</div>`;
+}
+function pcRoute(lat,lng,label){closePlaceCard();showRoute(lat,lng,label);}
+function renderPlaceCard(){
+  const el=document.getElementById("pcard"),v=T11[S.lang];if(!PC){el.hidden=true;return;}
+  let h=`<button type="button" class="pc-x" onclick="closePlaceCard()" aria-label="${esc(v.close)}">×</button>`;
+  if(PC.loading)h+=`<p class="note">${esc(v.loading)}</p>`;
+  else{
+    if(PC.hit)h+=pcItem(PC.hit,true);
+    else{
+      h+=`<div class="pc-it big"><div class="pc-h"><b>${esc(PC.bld||PC.road||PC.jibun||v.here)}</b><span class="chip">${esc(v.here)}</span></div>
+        ${PC.road?`<small>${esc(v.road)} ${esc(PC.road)}</small>`:""}${PC.jibun?`<small>${esc(v.jibun)} ${esc(PC.jibun)}</small>`:""}
+        <div class="pc-act"><button type="button" onclick="pcRoute(${PC.at.lat},${PC.at.lng},'${esc(PC.bld||PC.road||v.here).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(PC.road||PC.jibun||v.here,PC.at.lat,PC.at.lng)}</div></div>`;
+    }
+    if(PC.inBld.length)h+=`<p class="pc-sec">${esc(v.inBld)}</p>`+PC.inBld.map(p=>pcItem(p,false)).join("");
+    if(PC.rest.length)h+=`<p class="pc-sec">${esc(v.near)}</p>`+PC.rest.map(p=>pcItem(p,false)).join("");
+    if(!PC.hit&&!PC.inBld.length&&!PC.rest.length)h+=`<p class="note">${esc(v.none)}</p>`;
+  }
+  el.innerHTML=h;el.hidden=false;
+}
+// 일반지도 / 위성지도
+let MAPTYPE="road";try{MAPTYPE=localStorage.getItem("sp_maptype")==="sky"?"sky":"road";}catch(e){}
+function setMapType(t){
+  MAPTYPE=t;try{localStorage.setItem("sp_maptype",t);}catch(e){}
+  if(map)map.setMapTypeId(t==="sky"?kakao.maps.MapTypeId.HYBRID:kakao.maps.MapTypeId.ROADMAP);
+  document.getElementById("map").classList.toggle("sky",t==="sky");renderMapType();
+}
+function renderMapType(){
+  const v=T11[S.lang],el=document.getElementById("mtype");if(!el)return;
+  el.innerHTML=["road","sky"].map(t=>`<button type="button" class="mt-${t}" aria-pressed="${MAPTYPE===t}" onclick="setMapType('${t}')"><span></span><small>${esc(t==="sky"?v.sky:v.map)}</small></button>`).join("");
+}
+function initMapExtras(){
+  document.getElementById("mtype").hidden=false;setMapType(MAPTYPE);
+  kakao.maps.event.addListener(map,"click",e=>showPlaceCard(e.latLng));
 }
 function pinHtml(cls,label,color){return `<div class="pin ${cls}" style="${color?`background:${color}`:""}"><span>${label}</span></div>`;}
 function drawMarkers(){
