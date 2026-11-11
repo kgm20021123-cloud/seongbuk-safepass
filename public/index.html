@@ -183,7 +183,8 @@ select.lang{height:32px;border:1px solid var(--stone);border-radius:6px;padding:
 .evchips button.on{background:var(--giwa);border-color:var(--giwa);color:#fff}
 .near>span{min-width:0;overflow-wrap:anywhere}
 .panel,.list{min-width:0}
-html,body{overflow-x:clip}   /* 2px 이하 반올림 넘침 숨김 (sticky 는 그대로 동작) */.list{overflow-wrap:break-word}
+html,body{overflow-x:clip}
+@media(max-width:380px){.tabs button{font-size:11.5px!important;letter-spacing:-.02em}}   /* 2px 이하 반올림 넘침 숨김 (sticky 는 그대로 동작) */.list{overflow-wrap:break-word}
 .srcl{font-size:11.5px;color:var(--giwa-2);margin:12px 0 0}
 .srcl a{color:var(--giwa-2)}
 .days{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:14px;margin:8px 0}
@@ -323,7 +324,7 @@ select.zone{display:block;width:100%;min-width:0}
   .demo{border-left:0;border-top:1px solid var(--stone)}
   .logo small{display:none}
   .tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;background:var(--paper);border-top:1px solid var(--stone);border-bottom:0;padding:0 0 env(safe-area-inset-bottom)}
-  .tabs button{border-bottom:0;border-top:3px solid transparent;margin:0;padding:9px 2px 10px}
+  .tabs button{border-bottom:0;border-top:3px solid transparent;margin:0;padding:9px 1px 10px;font-size:12.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tabs button[aria-selected="true"]{border-top-color:var(--celadon)}
   .list{padding-top:4px}
   .wx .sum strong{font-size:24px}
@@ -1216,6 +1217,7 @@ function render(){
   document.getElementById("installTxt").textContent=t.install;
   renderWeather();
   const tabList=t.tabs.map((x,i)=>[i,i===2?T2[S.lang].tabs2[0]:x[0]]);
+  tabList.splice(3,0,[6,T10[S.lang]]);   // 행사 다음에 「교통」
   if(STAYS[S.stay].info)tabList.unshift([5,T4[S.lang].tab]);
   const tb=document.getElementById("tabs");tb.style.gridTemplateColumns=`repeat(${tabList.length},1fr)`;
   tb.innerHTML=tabList.map(([i,lab])=>`<button role="tab" aria-selected="${i===S.tab}" onclick="setTab(${i})">${esc(lab)}</button>`).join("");
@@ -1256,6 +1258,12 @@ function renderList(){
     const card=f=>`<div class="blk"><h3>${esc(f.n[S.lang])}</h3><p class="note">${esc(f.p[S.lang])}</p>${f.hold?`<p class="note" style="color:var(--warn)">${esc(u.onHold)}</p>`:""}<div class="hrs" style="margin:0">${f.tel?`<span>☎ ${f.tel}</span>`:""}${srcLink(f.key)}</div></div>`;
     const now=FEST.filter(f=>f.m.includes(m)),soon=FEST.filter(f=>!f.m.includes(m)&&dist(f)<=3).sort((a,b)=>dist(a)-dist(b)),rest=FEST.filter(f=>!now.includes(f)&&!soon.includes(f)).sort((a,b)=>dist(a)-dist(b));
     L.innerHTML=holiHtml()+evHtml()+seoulHtml()+`<p class="sec">${esc(u.tabs2[1])}</p>`+(now.length?`<p class="sec">${esc(u.thisMonth)}</p>`+now.map(card).join(""):"")+(soon.length?`<p class="sec">${esc(u.next)}</p>`+soon.map(card).join(""):"")+`<p class="sec">${esc(u.later)}</p>`+rest.map(card).join("")+`<p class="note">${esc(u.exact)}</p>`+srcLine;
+  }else if(S.tab===6){
+    // 대중교통 탭: 가까운 역 → 타는 방법 → 기후동행카드 단기권
+    L.innerHTML=holiHtml()+`
+      <div class="blk"><h3>${esc(T6[S.lang].gT)}</h3><p><b>${esc(T6[S.lang].gStn)}</b> · ${esc(STN[(STAYS[S.stay].info||{}).stn||"hansung"].n[S.lang])} · ${esc(T4[S.lang].walk.replace("{m}",walkMin(km(STAYS[S.stay],STN.hansung))))}</p><div class="hrs" style="margin:0 0 4px">${walkLink(STN.hansung.n.ko,STN.hansung.lat,STN.hansung.lng)}</div><p>${esc(T6[S.lang].gTap)}</p></div>
+      `+rideHtml()+`
+      <div class="blk"><h3>${esc(t.pass)}</h3><p>${esc(t.passTxt)}</p><p>${esc(T6[S.lang].pPrice)}</p><p>${esc(T6[S.lang].pWhere)}</p><p>${esc(T6[S.lang].pCard)}</p><p class="note">${esc(T6[S.lang].pNot)}</p><p class="note">${esc(T6[S.lang].pReg)}</p><p class="note">💡 ${esc(T6[S.lang].pDisc)}</p><p class="note">${esc(T6[S.lang].pAsk)}</p><p class="srcl"><a href="https://world.seoul.go.kr/policy/transportation/climate-card/" target="_blank" rel="noopener">${esc(T6[S.lang].pSrc)}</a></p></div>`;
   }else if(S.tab===3){
     if(!D){L.innerHTML=`<p class="note">…</p>`;return;}
     const u3=T3[S.lang],dg=DONG[S.stay],today=new Date().getDay();
@@ -1286,8 +1294,6 @@ function renderList(){
       <div class="blk"><h3>${esc(t.cs)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("cs")}</div>
       <div class="blk"><h3>${esc(t.pm)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("pm")}</div>
       <div class="blk"><h3>${esc(u.money)}</h3><p>${esc(u.moneyTxt)}</p></div>
-      <div class="blk"><h3>${esc(T6[S.lang].gT)}</h3><p><b>${esc(T6[S.lang].gStn)}</b> · ${esc(STN[(STAYS[S.stay].info||{}).stn||"hansung"].n[S.lang])}</p><p>${esc(T6[S.lang].gTap)}</p></div>
-      <div class="blk"><h3>${esc(t.pass)}</h3><p>${esc(t.passTxt)}</p><p>${esc(T6[S.lang].pPrice)}</p><p>${esc(T6[S.lang].pWhere)}</p><p>${esc(T6[S.lang].pCard)}</p><p class="note">${esc(T6[S.lang].pNot)}</p><p class="note">${esc(T6[S.lang].pReg)}</p><p class="note">💡 ${esc(T6[S.lang].pDisc)}</p><p class="note">${esc(T6[S.lang].pAsk)}</p><p class="srcl"><a href="https://world.seoul.go.kr/policy/transportation/climate-card/" target="_blank" rel="noopener">${esc(T6[S.lang].pSrc)}</a></p></div>${rideHtml()}
       <p class="srcl"><b>${esc(u3.srcData)}</b><br>${["trash","police","toilets","wifi"].map(k=>esc(D.sources[k])).join("<br>")}</p>`+srcLine;
   }else{
     const h=T8[S.lang],tel=n=>n.replace(/[^0-9+]/g,"");
@@ -1370,6 +1376,7 @@ function holiHtml(){
   const f=x=>x.slice(5).replace("-","/"),t=HOLIT[S.lang];
   return `<div class="holi"><b>${esc(t.h)} · ${esc(L4(h.n))}</b> <span class="num">${f(h.s)}${h.e!==h.s?"–"+f(h.e):""}</span><small>${esc(t.t)}</small></div>`;
 }
+const T10={en:"Transit",zh:"交通",ja:"交通",ko:"교통"};
 function setTab(i){if(i!==S.tab){S.compact=true;S.wx=null;}S.tab=i;render();if(i===3){loadNear();loadLife();}}
 function defaultZone(){const dn=S.stay==="B"?"성북동":"삼선동";const i=D.trash.findIndex(z=>z.areas.includes(dn));return i<0?0:i;}
 // 한양도성 공식 영문 안내 (공공누리 4유형: 고치지 않고 원문 그대로 + 출처)
@@ -1471,7 +1478,7 @@ function drawMarkers(){
   add(st.lat,st.lng,pinHtml("home","⌂",""),10);
   const bounds=new kakao.maps.LatLngBounds();bounds.extend(new kakao.maps.LatLng(st.lat,st.lng));
   if(S.showStays&&D)D.stays.forEach(s=>add(s.lat,s.lng,`<div class="dot" title="${esc(s.name)}" style="background:${({minbak:"#7048e8",hanok:"#e8590c",lodging:"#868e96",hotel:"#1c7ed6"})[s.kind]}"></div>`,2));
-  if(S.tab===5){const sn=STN.hansung;add(sn.lat,sn.lng,pinHtml("","M","#2F6B5C"),5);bounds.extend(new kakao.maps.LatLng(sn.lat,sn.lng));}
+  if(S.tab===5||S.tab===6){const sn=STN.hansung;add(sn.lat,sn.lng,pinHtml("","M","#2F6B5C"),5);bounds.extend(new kakao.maps.LatLng(sn.lat,sn.lng));}
   else if(S.tab===1&&API.cent&&API.cent.ok){sortedFood().forEach((f,i)=>add(f.lat,f.lng,pinHtml("",i+1,"#8C3B4A"),5));API.cent.rows.filter(c=>c.lat).forEach(c=>{add(c.lat,c.lng,pinHtml("","百","#8C3B4A"),5);bounds.extend(new kakao.maps.LatLng(c.lat,c.lng));});}
   else if(S.tab===1)sortedFood().forEach((f,i)=>{add(f.lat,f.lng,pinHtml("",i+1,"#d6336c"),5);bounds.extend(new kakao.maps.LatLng(f.lat,f.lng));});
   else if(S.tab===2&&D){D.events.filter(e=>e.lat).forEach(e=>{add(e.lat,e.lng,pinHtml("","★","#ae3ec9"),5);bounds.extend(new kakao.maps.LatLng(e.lat,e.lng));});}
