@@ -197,9 +197,20 @@ def events(q):
         except Exception as e:
             return {"ok": False, "reason": f"서울 열린데이터광장 호출 실패: {e}"}
         today = datetime.now(KST).strftime("%Y-%m-%d")
-        out = []
+        soon = (datetime.now(KST) + timedelta(days=21)).strftime("%Y-%m-%d")
+        out, seoul = [], []
         for r in rows:
             end = str(r.get("END_DATE", ""))[:10]
+            start = str(r.get("STRTDATE", ""))[:10]
+            # 서울 전체 축제: 분류가 「축제」이고 지금 ~ 3주 안에 열리는 것 (성북구 밖)
+            if r.get("GUNAME") != "성북구" and "축제" in str(r.get("CODENAME", "")) and end >= today and start <= soon:
+                try:
+                    la, lo = float(r.get("LAT") or 0), float(r.get("LOT") or 0)
+                except ValueError:
+                    la = lo = 0
+                seoul.append({"title": r.get("TITLE", ""), "cat": r.get("CODENAME", ""), "gu": r.get("GUNAME", ""), "start": start, "end": end,
+                              "time": r.get("PRO_TIME", ""), "place": r.get("PLACE", ""), "fee": r.get("USE_FEE", ""), "free": r.get("IS_FREE", ""),
+                              "url": r.get("HMPG_ADDR", ""), "lat": la if 37 < la < 38 else None, "lng": lo if 126 < lo < 128 else None})
             if r.get("GUNAME") != "성북구" or end < today:
                 continue
             try:
@@ -212,7 +223,8 @@ def events(q):
                         "free": r.get("IS_FREE", ""), "url": r.get("HMPG_ADDR", ""),
                         "lat": lat if 37 < lat < 38 else None, "lng": lng if 126 < lng < 128 else None})
         out.sort(key=lambda e: e["start"])
-        return {"ok": True, "count": len(out), "events": out, "src": "서울 열린데이터광장 서울시 문화행사 정보 (OA-15486)"}
+        seoul.sort(key=lambda e: (e["start"] > today, e["start"]))   # 진행 중 먼저, 그다음 가까운 날짜
+        return {"ok": True, "count": len(out), "events": out, "seoul": seoul[:12], "src": "서울 열린데이터광장 서울시 문화행사 정보 (OA-15486)"}
     return cached("events", 6 * 3600, go)
 
 

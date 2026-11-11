@@ -163,9 +163,27 @@ select.lang{height:32px;border:1px solid var(--stone);border-radius:6px;padding:
 .ride ol{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:st}
 .ride li{counter-increment:st;font-size:13.5px;line-height:1.55}
 .ride li span::before{content:counter(st);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--celadon);color:#fff;font-size:12px;font-weight:700;margin-right:6px}
+.ride li.band{counter-increment:none;font-weight:700;font-size:13px;text-align:center;padding:6px 10px;border-radius:6px;margin-top:4px}
+.ride li.band.b1{background:var(--celadon-s);color:var(--celadon)}.ride li.band.b2{background:var(--celadon);color:#fff}.ride li.band.b3{background:var(--giwa);color:#fff}
+.ride li.tipbox{counter-increment:none;background:var(--celadon-s);border-radius:8px;padding:10px 12px;font-size:13px}
+.ride li.tipbox b{display:block;color:var(--celadon);font-size:12.5px;margin-bottom:2px}
+.ride li.lnk{counter-increment:none;font-size:13px;font-weight:600}.ride li.lnk a{color:var(--celadon)}
 .ride li.tip{background:#FBF3E4;border-left:3px solid #C98A2B;padding:8px 10px;border-radius:6px}
 .ride li.tip span::before{content:"!";background:#C98A2B}
 .ride img{display:block;width:100%;max-width:420px;aspect-ratio:4/3;object-fit:cover;border-radius:10px;margin:0 0 6px;background:var(--stone-2)}
+.call{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--stone-2)}
+.call:last-child{border-bottom:0}
+.call b{font-size:14px}.call small{display:block;font-size:12.5px;color:var(--giwa-2);line-height:1.5;margin-top:2px}
+.call small a{color:var(--celadon);font-weight:600}
+.call .big{flex:0 0 auto;white-space:nowrap}
+.holi{background:var(--amber-s);border-left:3px solid var(--amber);border-radius:6px;padding:10px 12px;margin:8px 0 4px;font-size:13.5px}
+.holi b{color:var(--amber)}.holi small{display:block;font-size:12.5px;color:var(--giwa);margin-top:2px}
+.evchips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.evchips button{border:1px solid var(--stone);background:var(--paper);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--giwa)}
+.evchips button.on{background:var(--giwa);border-color:var(--giwa);color:#fff}
+.near>span{min-width:0;overflow-wrap:anywhere}
+.panel,.list{min-width:0}
+html,body{overflow-x:clip}   /* 2px 이하 반올림 넘침 숨김 (sticky 는 그대로 동작) */.list{overflow-wrap:break-word}
 .srcl{font-size:11.5px;color:var(--giwa-2);margin:12px 0 0}
 .srcl a{color:var(--giwa-2)}
 .days{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:14px;margin:8px 0}
@@ -581,58 +599,136 @@ function walkUrl(name,lat,lng){const st=STAYS[S.stay],from=STAYS[S.stay].info?st
   return "https://map.kakao.com/link/by/walk/"+encodeURIComponent(from)+","+st.lat+","+st.lng+"/"+encodeURIComponent(name)+","+lat+","+lng;}
 const T6={
  en:{bus:"Bus · subway",gT:"Getting around",gStn:"Nearest subway",gTap:"Tap your card when you get on AND off the bus — transfers are then discounted.",
-  pWhere:"Buy at: subway station service desks, convenience stores near stations, Myeongdong Tourist Information Center. Card itself ₩3,000.",
+  pWhere:"Buy the card (₩3,000) at the new ticket machines in Line 1–8 stations, or at convenience stores near Line 9, Ui-Sinseol and Sillim Line stations. Recharge at kiosks inside stations.",
   pCard:"From 17 Mar 2026, the new ticket machines at 273 stations on Lines 1–8 accept Visa · Mastercard and Kakao Pay · Naver Pay (about 3.7% fee).",
-  pNot:"Not valid on: some private railways, Gyeonggi-do buses and express buses. At Incheon Airport you can get off, but not get on.",
-  pPrice:"Prices from a 2024 Seoul notice — please check at the station.",pSrc:"Source: Seoul Metropolitan Government (2024-10-08, 2026-03-16)",
+  pNot:"Covered: subways within Seoul (incl. Gimpo Airport Station; you can get OFF at Incheon Airport T1/T2) and Seoul city, village, night and circular buses. Not covered: Sinbundang Line, GTX, stations outside Seoul, express and airport buses, buses from other regions.",
+  pPrice:"Valid from the first train (4 AM) on the day you charge it until the last train of the last day. No advance charging.",pReg:"Register your card on the Tmoney Card & Pay website (QR code on the back) — without it, no refund. Refund = charged − used − ₩500. Foreigners without a Korean bank account can get a refund at the Tmoney headquarters.",pDisc:"Pass holders get discounts: Seoul Botanic Park 50%, Seoul Grand Park 50%, Seoul Namsan & Donhwamun Traditional Theaters 20–30%, The Painters 30%.",pAsk:"Questions: 120 (Dasan Call Center) · 1644-0088 (Tmoney Customer Center)",pSrc:"Source: Seoul Metropolitan Government, Climate Card (world.seoul.go.kr) · press release 2026-03-16",
   myAddr:"My stay address (show to a taxi driver)"},
  zh:{bus:"公交·地铁",gT:"出行方式",gStn:"最近的地铁站",gTap:"乘坐公交车时，上车和下车都要刷卡，这样换乘才有优惠。",
-  pWhere:"购买地点：地铁站客服中心、车站附近便利店、明洞旅游咨询中心。卡费另需 ₩3,000。",
+  pWhere:"卡（₩3,000）可在1~8号线车站的新型售票机购买，或在9号线、牛耳新设线、新林线车站附近的便利店购买。在站内充值机充值。",
   pCard:"自2026年3月17日起，1~8号线273个车站的新型售票机可使用 Visa · Mastercard 及 Kakao Pay · Naver Pay（约3.7%手续费）。",
-  pNot:"不可使用：部分民营铁路、京畿道公交和广域巴士。仁川机场只能下车，不能上车。",
-  pPrice:"价格来自首尔市2024年公告，请在车站确认。",pSrc:"来源：首尔特别市（2024-10-08，2026-03-16）",
+  pNot:"可用：首尔市内地铁（含金浦机场站；仁川机场T1/T2只能下车）、首尔市内 · 村 · 夜间 · 循环公交。不可用：新盆唐线、GTX、首尔以外车站、快线和机场巴士、外地公交。",
+  pPrice:"从充值当天首班车（凌晨4点）起，到最后一天末班车为止。不能提前充值。",pReg:"请在 Tmoney Card & Pay 网站登记卡片（卡背面有二维码），否则不能退款。退款 = 充值金额 − 已用金额 − ₩500。没有韩国银行账户的外国人可到 Tmoney 总部退款。",pDisc:"持卡优惠：首尔植物园 50%、首尔大公园 50%、首尔南山 · 敦化门国乐堂 20–30%、The Painters 30%。",pAsk:"咨询：120（茶山呼叫中心）· 1644-0088（Tmoney 客服）",pSrc:"来源：首尔特别市「Climate Card」· 2026-03-16 新闻稿",
   myAddr:"我的住宿地址（给出租车司机看）"},
  ja:{bus:"バス・地下鉄",gT:"移動のしかた",gStn:"最寄りの地下鉄駅",gTap:"バスは乗るときと降りるときの両方でカードをタッチすると、乗り換えが割引になります。",
-  pWhere:"購入場所：地下鉄駅の駅務室、駅近くのコンビニ、明洞観光情報センター。カード代 ₩3,000 は別。",
+  pWhere:"カード（₩3,000）は1～8号線の駅の新しい券売機、または9号線・牛耳新設線・新林線の駅近くのコンビニで。チャージは駅のチャージ機で。",
   pCard:"2026年3月17日から、1～8号線273駅の新しい券売機で Visa・Mastercard、Kakao Pay・Naver Pay が使えます（手数料 約3.7%）。",
-  pNot:"使えない所：一部の民間鉄道、京畿道の市内バス・広域バス。仁川空港では降りられますが、乗れません。",
-  pPrice:"料金はソウル市の2024年のお知らせによります。駅で確認してください。",pSrc:"出典：ソウル特別市（2024-10-08、2026-03-16）",
+  pNot:"使える：ソウル市内の地下鉄（金浦空港駅を含む。仁川空港T1/T2は降車のみ）、ソウルの市内・マウル・深夜・循環バス。使えない：新盆唐線、GTX、ソウル市外の駅、急行・空港バス、他地域のバス。",
+  pPrice:"チャージした日の始発（午前4時）から最終日の終電まで。事前チャージはできません。",pReg:"Tmoney Card & Pay サイトでカード登録を（裏面のQRコード）。登録しないと払い戻しできません。払い戻し＝チャージ額−利用額−₩500。韓国の銀行口座がない外国人は Tmoney 本社で払い戻し。",pDisc:"パス所持者の割引：ソウル植物園 50%、ソウル大公園 50%、ソウル南山・敦化門国楽堂 20–30%、The Painters 30%。",pAsk:"問い合わせ：120（茶山コールセンター）· 1644-0088（Tmoney カスタマーセンター）",pSrc:"出典：ソウル特別市「Climate Card」· 2026-03-16 報道資料",
   myAddr:"宿泊先の住所（タクシーの運転手に見せる）"},
  ko:{bus:"버스·지하철",gT:"이동 방법",gStn:"가까운 지하철역",gTap:"버스는 탈 때와 내릴 때 모두 카드를 대야 환승 할인이 됩니다.",
-  pWhere:"사는 곳: 지하철 고객안전실, 역 근처 편의점, 명동관광정보센터. 카드값 3,000원 따로.",
+  pWhere:"카드(3,000원)는 1~8호선 역 새 발매기나, 9호선 · 우이신설선 · 신림선 역 근처 편의점에서 사요. 충전은 역 안 충전기에서.",
   pCard:"2026년 3월 17일부터 1~8호선 273개 역 새 발매기에서 해외 비자 · 마스터카드, 카카오페이 · 네이버페이로 살 수 있어요 (이용료 약 3.7%).",
-  pNot:"못 쓰는 곳: 일부 민자철도, 경기도 시내 · 광역버스. 인천공항은 내릴 수만 있고 탈 수는 없어요.",
-  pPrice:"가격은 서울시 2024년 안내 기준이에요. 역에서 확인하세요.",pSrc:"출처: 서울특별시 (2024-10-08, 2026-03-16)",
+  pNot:"되는 곳: 서울 안 지하철(김포공항역 포함, 인천공항 1·2터미널은 내리기만) · 서울 시내 · 마을 · 심야 · 순환버스. 안 되는 곳: 신분당선, GTX, 서울 밖 역, 광역 · 공항버스, 다른 지역 버스.",
+  pPrice:"충전한 날 첫차(새벽 4시)부터 마지막 날 막차까지. 미리 충전은 안 돼요.",pReg:"티머니카드&페이 누리집에 카드를 등록해야(뒷면 QR) 환불이 돼요. 환불액 = 충전액 − 사용액 − 500원. 한국 계좌가 없는 외국인은 티머니 본사에서 환불.",pDisc:"단기권 소지자 할인: 서울식물원 50%, 서울대공원 50%, 서울남산 · 돈화문국악당 20~30%, 페인터즈 30%.",pAsk:"문의: 120(다산콜센터) · 1644-0088(티머니 고객센터)",pSrc:"출처: 서울특별시 영문 누리집 「Climate Card」 · 2026-03-16 보도자료",
   myAddr:"내 숙소 주소 (택시 기사에게 보여 주기)"}
 };
-// 버스 · 지하철 타는 법 (그림: public/guide/*.png — 없으면 글만 보임)
+// 버스 · 지하철 타는 방법 — 근거: 서울특별시 영문 누리집 「Public Transportation」 · 서울교통공사 「Single-journey ticket」(사실만 우리 말로 정리) · Visit Seoul(환승) · 서울시 교통(기후동행카드)
+// parts: {b:"띠 제목",c:1|2|3} = 단계 띠 · [그림, 글, 주의] = 단계 · {tip:"…"} = 알아 두세요 상자
+// 그림: public/guide/*.png (없으면 글만)
 const RIDE={
- en:{t:"How to ride",g:[["Get a card",[["card1","Buy a transport card (T-money) at a convenience store. The card costs ₩3,000; top it up with cash at the counter."],["card2","Or use the ticket machine at a subway station: choose your language, then the Climate Card short-term pass or a single-journey ticket. New machines at 273 stations accept overseas Visa · Mastercard."]]],
-  ["Subway",[["sub1","Tap your card on the gate reader to go in."],["sub2","Check the line colour and the direction (the next station's name) before going down to the platform. Wait behind the yellow line / screen doors."],["sub3","To change lines, follow the coloured line signs inside the station. You don't need to tap out."],["sub4","Tap your card again at the gate when you leave. Single-journey ticket: put it into the deposit refund machine to get ₩500 back."],["gate1","If your card doesn't work or anything goes wrong: go to the wide gate (wheelchair sign). It has a staff call button.",1],["gate2","Press the call button and speak to the station staff through the speaker. If language is hard, call 1330 (Korea Travel Helpline) for interpretation.",1]]],
-  ["Bus",[["bus1","Check the bus number at the stop. Get on at the front door and tap your card."],["bus2","Press the red stop button before your stop. Tap your card at the back door and get off."]]]],
+ en:{t:"How to ride",tipH:"Good to know",g:[
+  {h:"Get a card",p:[["card1","Buy a transport card (T-money or Cash-bee) at a convenience store or a subway station. A T-money card costs ₩3,000 — top it up with cash at the counter."],
+    ["card2","Or use the ticket machine at a subway station: choose your language, then the Climate Card short-term pass or a single-journey ticket. New machines at 273 stations accept overseas Visa · Mastercard."],
+    {b:"Single-journey ticket — step by step",c:1},
+    ["card3","At the single-journey ticket machine: choose your language at the bottom of the screen, then “Single-Journey” on the left."],
+    ["","Find your destination — by station number (“Search Route” → “Search Station Number”) or by tapping the first letter of the station name."],
+    ["","Choose how many tickets, then pay the fare plus a ₩500 deposit."],
+    ["","Tap the ticket on the T-money reader on the right side of the gate. At your destination, put it into the Deposit Refund Device to get the ₩500 back."],
+    {link:"See the machine screens step by step (Seoul Metro) ↗",href:"http://www.seoulmetro.co.kr/en/page.do?menuIdx=719"},
+    {tip:"One card works on buses, the subway, taxis and Ttareungi public bikes. Reload machines in subway stations have language settings and take cash, cards or mobile transfer."}]},
+  {h:"Bus",p:[{b:"Before you ride",c:1},["","Have your card ready."],["","Check when your bus comes on Kakao Map or Naver Map, or on the screen at the stop."],
+    {b:"Getting on",c:2},["bus1","Get on through the FRONT door and tap your card on the reader next to the driver. Paying for several people? Tell the driver how many."],
+    {b:"Getting off",c:3},["bus2","Press the stop bell BEFORE your stop, tap your card at the BACK door, then get off."],
+    {tip:"Bus colours — blue: long routes across Seoul · green: local, links to the subway · yellow: city-centre loop · red: express to outside Seoul. Night buses (N) run after midnight."}]},
+  {h:"Subway",p:[["sub1","Tap your card on the gate reader to go in."],
+    ["sub2","Check the line colour and the direction (the next station's name) before going down to the platform. Wait behind the yellow line / screen doors."],
+    ["sub3","To change lines, follow the coloured line signs inside the station. You don't need to tap out."],
+    ["sub4","Tap your card again at the gate when you leave. Single-journey ticket (₩100 more than a card, subway only): put it into the deposit refund machine to get ₩500 back."],
+    ["gate1","If your card doesn't work or anything goes wrong: go to the wide gate (wheelchair sign). It has a staff call button.",1],
+    ["gate2","Press the call button and speak to the station staff through the speaker. If language is hard, call 1330 (Korea Travel Helpline) for interpretation.",1],
+    {tip:"The free “Seoul Subway” app shows routes from where you are, station exits, restrooms and how crowded each car is. Every Seoul subway station has a public restroom."}]}],
   tr:"Transfers are discounted when you tap off and board the next bus or subway within 30 minutes (1 hour from 21:00 to 07:00), up to 4 times.",
-  src:"Source: Visit Seoul (Seoul Tourism Organization), Seoul Metropolitan Government"},
- zh:{t:"乘车方法",g:[["准备交通卡",[["card1","在便利店购买交通卡（T-money）。卡费 ₩3,000，可在柜台用现金充值。"],["card2","也可以在地铁站售票机选择语言后，购买气候同行卡短期券或单程票。273个车站的新型售票机可用海外 Visa · Mastercard。"]]],
-  ["地铁",[["sub1","在闸机读卡器上刷卡进站。"],["sub2","下到站台前，先确认线路颜色和方向（下一站站名）。在黄线 / 屏蔽门后等车。"],["sub3","换乘时跟着站内的线路颜色标志走，不需要出站刷卡。"],["sub4","出站时再在闸机刷卡。单程票请投入押金退还机，可退回 ₩500。"],["gate1","刷卡失败或遇到其他问题时：请到有轮椅标志的宽闸机，那里有呼叫站务员按钮。",1],["gate2","按下呼叫按钮，对着扬声器与站务员通话。语言不通时可拨打1330（旅游咨询热线）请求翻译。",1]]],
-  ["公交",[["bus1","在车站确认公交车号码，从前门上车并刷卡。"],["bus2","到站前按红色下车铃，在后门刷卡后下车。"]]]],
+  src:"Sources: Seoul Metropolitan Government (Public Transportation), Seoul Metro (Single-journey ticket), Visit Seoul"},
+ zh:{t:"乘车方法",tipH:"小贴士",g:[
+  {h:"准备交通卡",p:[["card1","在便利店或地铁站购买交通卡（T-money 或 Cash-bee）。T-money 卡费 ₩3,000，可在柜台用现金充值。"],
+    ["card2","也可以在地铁站售票机选择语言后，购买气候同行卡短期券或单程票。273个车站的新型售票机可用海外 Visa · Mastercard。"],
+    {b:"单程票购买步骤",c:1},
+    ["card3","在单程票售票机屏幕下方选择语言，再点左侧的「Single-Journey（单程票）」。"],
+    ["","查找目的地：用车站编号（「Search Route」→「Search Station Number」），或点车站名称的首字母。"],
+    ["","选择张数，投入票价和 ₩500 押金。"],
+    ["","在闸机右侧的 T-money 读卡器上刷票进站。到站后把票投入押金退还机，取回 ₩500。"],
+    {link:"查看售票机屏幕的分步图片（首尔交通公社）↗",href:"http://www.seoulmetro.co.kr/en/page.do?menuIdx=719"},
+    {tip:"一张卡可乘坐公交、地铁、出租车和公共自行车“叮铃”。地铁站的充值机可选语言，可用现金、银行卡或手机转账。"}]},
+  {h:"公交",p:[{b:"上车前",c:1},["","准备好交通卡。"],["","用 Kakao Map、Naver Map 或车站屏幕查看公交何时到站。"],
+    {b:"上车",c:2},["bus1","从前门上车，在司机旁的读卡器刷卡。多人一起付款时，告诉司机人数。"],
+    {b:"下车",c:3},["bus2","到站前先按下车铃，在后门刷卡后下车。"],
+    {tip:"公交颜色 — 蓝色：首尔长线 · 绿色：社区线，连接地铁 · 黄色：市中心循环 · 红色：开往首尔以外的快线。凌晨有夜间公交（N）。"}]},
+  {h:"地铁",p:[["sub1","在闸机读卡器上刷卡进站。"],
+    ["sub2","下到站台前，先确认线路颜色和方向（下一站站名）。在黄线 / 屏蔽门后等车。"],
+    ["sub3","换乘时跟着站内的线路颜色标志走，不需要出站刷卡。"],
+    ["sub4","出站时再在闸机刷卡。单程票（比交通卡贵₩100，仅限地铁）请投入押金退还机，可退回 ₩500。"],
+    ["gate1","刷卡失败或遇到其他问题时：请到有轮椅标志的宽闸机，那里有呼叫站务员按钮。",1],
+    ["gate2","按下呼叫按钮，对着扬声器与站务员通话。语言不通时可拨打1330（旅游咨询热线）请求翻译。",1],
+    {tip:"免费的“Seoul Subway”应用可按当前位置推荐路线，并显示出口、洗手间和各车厢拥挤程度。首尔所有地铁站都有公共洗手间。"}]}],
   tr:"下车刷卡后30分钟内（21:00~07:00为1小时内）换乘公交或地铁可享优惠，最多4次。",
-  src:"来源：Visit Seoul（首尔观光财团）、首尔特别市"},
- ja:{t:"乗り方",g:[["カードを用意",[["card1","コンビニで交通カード（T-money）を買います。カード代 ₩3,000、チャージはレジで現金で。"],["card2","地下鉄駅の券売機で言語を選び、気候同行カード短期券か1回用交通カードを買うこともできます。273駅の新しい券売機は海外の Visa・Mastercard に対応。"]]],
-  ["地下鉄",[["sub1","改札の読み取り機にカードをタッチして入ります。"],["sub2","ホームに下りる前に、路線の色と方向（次の駅名）を確かめます。黄色い線・ホームドアの内側で待ちます。"],["sub3","乗り換えは駅の中の路線の色の案内に従います。改札を出る必要はありません。"],["sub4","出るときも改札でタッチ。1回用交通カードは保証金払戻機に入れると ₩500 戻ります。"],["gate1","カードが反応しない・困ったときは：車いすマークのある幅の広い改札へ。駅員呼び出しボタンがあります。",1],["gate2","呼び出しボタンを押し、スピーカーに向かって駅員と話します。言葉が難しいときは1330（観光通訳案内）に電話すると通訳してもらえます。",1]]],
-  ["バス",[["bus1","停留所でバスの番号を確かめ、前のドアから乗ってカードをタッチ。"],["bus2","降りる前に赤い降車ボタンを押し、後ろのドアでカードをタッチして降ります。"]]]],
+  src:"来源：首尔特别市（Public Transportation）、首尔交通公社（Single-journey ticket）、Visit Seoul"},
+ ja:{t:"乗り方",tipH:"知っておくと便利",g:[
+  {h:"カードを用意",p:[["card1","コンビニか地下鉄駅で交通カード（T-money または Cash-bee）を買います。T-money はカード代 ₩3,000、チャージはレジで現金で。"],
+    ["card2","地下鉄駅の券売機で言語を選び、気候同行カード短期券か1回用交通カードを買うこともできます。273駅の新しい券売機は海外の Visa・Mastercard に対応。"],
+    {b:"1回用交通カードの買い方",c:1},
+    ["card3","1回用交通カード券売機で、画面下で言語を選び、左側の「Single-Journey（1回用）」を押します。"],
+    ["","目的地を探します：駅番号（「Search Route」→「Search Station Number」）か、駅名の最初の文字から。"],
+    ["","枚数を選び、運賃と保証金 ₩500 を入れます。"],
+    ["","改札の右側の T-money 読み取り機にタッチして入場。到着駅で保証金払戻機に入れると ₩500 が戻ります。"],
+    {link:"券売機の画面を写真で見る（ソウル交通公社）↗",href:"http://www.seoulmetro.co.kr/en/page.do?menuIdx=719"},
+    {tip:"1枚でバス・地下鉄・タクシー・公共自転車「タルンイ」に使えます。地下鉄駅のチャージ機は言語を選べ、現金・カード・モバイル送金で払えます。"}]},
+  {h:"バス",p:[{b:"乗る前に",c:1},["","カードを用意します。"],["","Kakao Map や Naver Map、停留所の画面でバスの到着時間を確かめます。"],
+    {b:"乗るとき",c:2},["bus1","前のドアから乗り、運転席横の読み取り機にカードをタッチ。複数人分を払うときは運転手に人数を伝えます。"],
+    {b:"降りるとき",c:3},["bus2","降りる停留所の手前で降車ボタンを押し、後ろのドアでカードをタッチして降ります。"],
+    {tip:"バスの色 — 青：ソウル市内の長距離 · 緑：地域路線（地下鉄と接続）· 黄：都心循環 · 赤：ソウル市外への急行。深夜は夜間バス（N）。"}]},
+  {h:"地下鉄",p:[["sub1","改札の読み取り機にカードをタッチして入ります。"],
+    ["sub2","ホームに下りる前に、路線の色と方向（次の駅名）を確かめます。黄色い線・ホームドアの内側で待ちます。"],
+    ["sub3","乗り換えは駅の中の路線の色の案内に従います。改札を出る必要はありません。"],
+    ["sub4","出るときも改札でタッチ。1回用交通カード（カードより₩100高く、地下鉄のみ）は保証金払戻機に入れると ₩500 戻ります。"],
+    ["gate1","カードが反応しない・困ったときは：車いすマークのある幅の広い改札へ。駅員呼び出しボタンがあります。",1],
+    ["gate2","呼び出しボタンを押し、スピーカーに向かって駅員と話します。言葉が難しいときは1330（観光通訳案内）に電話すると通訳してもらえます。",1],
+    {tip:"無料アプリ「Seoul Subway」で現在地からの経路、出口、トイレ、車両ごとの混雑がわかります。ソウルの地下鉄駅にはすべて公衆トイレがあります。"}]}],
   tr:"降りるときにタッチし、30分以内（21:00～07:00は1時間以内）に次のバス・地下鉄に乗ると乗り換え割引、4回まで。",
-  src:"出典：Visit Seoul（ソウル観光財団）、ソウル特別市"},
- ko:{t:"타는 방법",g:[["교통카드 준비",[["card1","편의점에서 교통카드(티머니)를 사요. 카드값 3,000원, 충전은 계산대에서 현금으로."],["card2","지하철역 발매기에서 언어를 고른 뒤 기후동행카드 단기권이나 1회용 교통카드를 살 수도 있어요. 273개 역 새 발매기는 해외 비자 · 마스터카드도 돼요."]]],
-  ["지하철",[["sub1","개찰구 단말기에 카드를 대고 들어가요."],["sub2","승강장으로 내려가기 전에 노선 색과 방향(다음 역 이름)을 확인해요. 노란 선 · 스크린도어 뒤에서 기다려요."],["sub3","갈아탈 때는 역 안의 노선 색 표지를 따라가요. 개찰구를 나갈 필요 없어요."],["sub4","나갈 때도 개찰구에 카드를 대요. 1회용 교통카드는 보증금 환급기에 넣으면 500원을 돌려받아요."],["gate1","카드가 안 찍히거나 문제가 생기면: 휠체어 표시가 있는 넓은 개찰구로 가세요. 역무원 호출 버튼이 있어요.",1],["gate2","호출 버튼을 누르고 스피커에 대고 역무원과 이야기해요. 말이 잘 안 통하면 1330(관광통역안내)에 전화해 통역을 받을 수 있어요.",1]]],
-  ["버스",[["bus1","정류장에서 버스 번호를 확인하고 앞문으로 타며 카드를 대요."],["bus2","내리기 전에 빨간 하차 벨을 누르고, 뒷문에서 카드를 대고 내려요."]]]],
+  src:"出典：ソウル特別市（Public Transportation）、ソウル交通公社（Single-journey ticket）、Visit Seoul"},
+ ko:{t:"타는 방법",tipH:"알아 두세요",g:[
+  {h:"교통카드 준비",p:[["card1","편의점이나 지하철역에서 교통카드(티머니 · 캐시비)를 사요. 티머니 카드값 3,000원, 충전은 계산대에서 현금으로."],
+    ["card2","지하철역 발매기에서 언어를 고른 뒤 기후동행카드 단기권이나 1회용 교통카드를 살 수도 있어요. 273개 역 새 발매기는 해외 비자 · 마스터카드도 돼요."],
+    {b:"1회용 교통카드 사는 법",c:1},
+    ["card3","1회용 발매기 화면 아래에서 언어를 고르고, 왼쪽 「1회용(Single-Journey)」을 눌러요."],
+    ["","도착역 찾기: 역 번호로(「노선 검색」→「역 번호 검색」) 또는 역 이름 첫 글자로."],
+    ["","장수를 고르고 운임 + 보증금 500원을 넣어요."],
+    ["","개찰구 오른쪽 티머니 단말기에 대고 들어가요. 도착역 보증금 환급기에 넣으면 500원을 돌려받아요."],
+    {link:"발매기 화면을 그림으로 보기 (서울교통공사) ↗",href:"http://www.seoulmetro.co.kr/en/page.do?menuIdx=719"},
+    {tip:"카드 한 장으로 버스 · 지하철 · 택시 · 따릉이를 탈 수 있어요. 지하철역 충전기는 언어를 고를 수 있고 현금 · 카드 · 모바일 이체가 돼요."}]},
+  {h:"버스",p:[{b:"타기 전",c:1},["","교통카드를 준비해요."],["","카카오맵 · 네이버지도나 정류장 화면에서 버스가 언제 오는지 확인해요."],
+    {b:"탈 때",c:2},["bus1","앞문으로 타고 운전석 옆 단말기에 카드를 대요. 여러 명을 한 카드로 낼 때는 기사님께 인원을 말해요."],
+    {b:"내릴 때",c:3},["bus2","내릴 정류장 전에 하차 벨을 누르고, 뒷문 단말기에 카드를 댄 뒤 내려요."],
+    {tip:"버스 색 — 파랑: 서울 시내 긴 노선 · 초록: 동네 노선, 지하철 연결 · 노랑: 도심 순환 · 빨강: 서울 밖으로 가는 급행. 자정 넘어서는 심야버스(N)."}]},
+  {h:"지하철",p:[["sub1","개찰구 단말기에 카드를 대고 들어가요."],
+    ["sub2","승강장으로 내려가기 전에 노선 색과 방향(다음 역 이름)을 확인해요. 노란 선 · 스크린도어 뒤에서 기다려요."],
+    ["sub3","갈아탈 때는 역 안의 노선 색 표지를 따라가요. 개찰구를 나갈 필요 없어요."],
+    ["sub4","나갈 때도 개찰구에 카드를 대요. 1회용 교통카드(교통카드보다 100원 비싸고 지하철만)는 보증금 환급기에 넣으면 500원을 돌려받아요."],
+    ["gate1","카드가 안 찍히거나 문제가 생기면: 휠체어 표시가 있는 넓은 개찰구로 가세요. 역무원 호출 버튼이 있어요.",1],
+    ["gate2","호출 버튼을 누르고 스피커에 대고 역무원과 이야기해요. 말이 잘 안 통하면 1330(관광통역안내)에 전화해 통역을 받을 수 있어요.",1],
+    {tip:"무료 앱 「서울 지하철(Seoul Subway)」은 지금 위치에서 가는 길, 출구, 화장실, 칸별 혼잡도를 알려 줘요. 서울 지하철역에는 모두 공중화장실이 있어요."}]}],
   tr:"내릴 때 카드를 대고 30분 안에(21시~7시는 1시간 안에) 다음 버스 · 지하철을 타면 환승 할인, 4번까지.",
-  src:"출처: Visit Seoul(서울관광재단), 서울특별시"}
+  src:"출처: 서울특별시 영문 누리집 「Public Transportation」, 서울교통공사 「Single-journey ticket」, Visit Seoul(서울관광재단)"}
 };
 const RIDEOPEN=[true,false,false];   // 목록을 다시 그려도 펼친 상태 유지
 function rideHtml(){const r=RIDE[S.lang];
-  return `<div class="blk ride"><h3>${esc(r.t)}</h3>`+r.g.map(([h,steps],gi)=>`<details${RIDEOPEN[gi]?" open":""} ontoggle="RIDEOPEN[${gi}]=this.open"><summary>${esc(h)}</summary><ol>`+
-    steps.map(([img,txt,tip])=>`<li${tip?' class="tip"':""}><img src="guide/${img}.png" alt="" loading="lazy" onerror="this.remove()"><span>${esc(txt)}</span></li>`).join("")+`</ol></details>`).join("")+
-    `<p class="note">${esc(r.tr)}</p><p class="srcl">${esc(r.src)}</p></div>`;}
+  const part=x=>Array.isArray(x)?`<li${x[2]?' class="tip"':""}>${x[0]?`<img src="guide/${x[0]}.png" alt="" loading="lazy" onerror="this.remove()">`:""}<span>${esc(x[1])}</span></li>`
+    :x.b?`<li class="band b${x.c}">${esc(x.b)}</li>`
+    :x.link?`<li class="lnk"><a href="${x.href}" target="_blank" rel="noopener">${esc(x.link)}</a></li>`
+    :`<li class="tipbox"><b>${esc(r.tipH)}</b>${esc(x.tip)}</li>`;
+  return `<div class="blk ride"><h3>${esc(r.t)}</h3>`+r.g.map((g,gi)=>`<details${RIDEOPEN[gi]?" open":""} ontoggle="RIDEOPEN[${gi}]=this.open"><summary>${esc(g.h)}</summary><ol>`+
+    g.p.map(part).join("")+`</ol></details>`).join("")+
+    `<p class="note">${esc(r.tr)}</p><p class="srcl">${esc(r.src)} · <a href="https://world.seoul.go.kr/service/movement/public-transportation/" target="_blank" rel="noopener">world.seoul.go.kr</a> · <a href="http://www.seoulmetro.co.kr/en/page.do?menuIdx=719" target="_blank" rel="noopener">seoulmetro.co.kr</a></p></div>`;}
 // 카카오맵 대중교통 길찾기: 숙소 → 장소
 function busUrl(name,lat,lng){return walkUrl(name,lat,lng).replace("/link/by/walk/","/link/by/traffic/");}
 function walkLink(name,lat,lng){return `<a class="walk" href="${walkUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T4[S.lang].walkDir)}</a><a class="walk" href="${busUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T6[S.lang].bus)}</a>`;}
@@ -1136,7 +1232,7 @@ function renderList(){
   const srcLink=k=>`<a href="${SBEN(k)}" target="_blank" rel="noopener">${esc(u.source)}</a>`;
   const srcLine=`<p class="srcl"><a href="https://sb.go.kr/en/index.do" target="_blank" rel="noopener">${esc(u.srcLine)}</a></p>`;
   if(S.tab===5){
-    L.innerHTML=stayHtml();
+    L.innerHTML=holiHtml()+stayHtml();
   }else if(S.tab===0){
     L.innerHTML=sortedSpots().map((s,i)=>{const o=openState(s);return `<div class="item" onclick="focusPlace('${s.ko}')">
       <span class="no" style="background:${s.indoor?"var(--ok)":"var(--warn)"}">${i+1}</span>
@@ -1159,7 +1255,7 @@ function renderList(){
     const m=new Date().getMonth()+1,dist=f=>f.m.length?Math.min(...f.m.map(x=>(x-m+12)%12)):99;
     const card=f=>`<div class="blk"><h3>${esc(f.n[S.lang])}</h3><p class="note">${esc(f.p[S.lang])}</p>${f.hold?`<p class="note" style="color:var(--warn)">${esc(u.onHold)}</p>`:""}<div class="hrs" style="margin:0">${f.tel?`<span>☎ ${f.tel}</span>`:""}${srcLink(f.key)}</div></div>`;
     const now=FEST.filter(f=>f.m.includes(m)),soon=FEST.filter(f=>!f.m.includes(m)&&dist(f)<=3).sort((a,b)=>dist(a)-dist(b)),rest=FEST.filter(f=>!now.includes(f)&&!soon.includes(f)).sort((a,b)=>dist(a)-dist(b));
-    L.innerHTML=evHtml()+`<p class="sec">${esc(u.tabs2[1])}</p>`+(now.length?`<p class="sec">${esc(u.thisMonth)}</p>`+now.map(card).join(""):"")+(soon.length?`<p class="sec">${esc(u.next)}</p>`+soon.map(card).join(""):"")+`<p class="sec">${esc(u.later)}</p>`+rest.map(card).join("")+`<p class="note">${esc(u.exact)}</p>`+srcLine;
+    L.innerHTML=holiHtml()+evHtml()+seoulHtml()+`<p class="sec">${esc(u.tabs2[1])}</p>`+(now.length?`<p class="sec">${esc(u.thisMonth)}</p>`+now.map(card).join(""):"")+(soon.length?`<p class="sec">${esc(u.next)}</p>`+soon.map(card).join(""):"")+`<p class="sec">${esc(u.later)}</p>`+rest.map(card).join("")+`<p class="note">${esc(u.exact)}</p>`+srcLine;
   }else if(S.tab===3){
     if(!D){L.innerHTML=`<p class="note">…</p>`;return;}
     const u3=T3[S.lang],dg=DONG[S.stay],today=new Date().getDay();
@@ -1191,17 +1287,88 @@ function renderList(){
       <div class="blk"><h3>${esc(t.pm)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("pm")}</div>
       <div class="blk"><h3>${esc(u.money)}</h3><p>${esc(u.moneyTxt)}</p></div>
       <div class="blk"><h3>${esc(T6[S.lang].gT)}</h3><p><b>${esc(T6[S.lang].gStn)}</b> · ${esc(STN[(STAYS[S.stay].info||{}).stn||"hansung"].n[S.lang])}</p><p>${esc(T6[S.lang].gTap)}</p></div>
-      <div class="blk"><h3>${esc(t.pass)}</h3><p>${esc(t.passTxt)}</p><p>${esc(T6[S.lang].pWhere)}</p><p>${esc(T6[S.lang].pCard)}</p><p class="note">${esc(T6[S.lang].pNot)}</p><p class="note">${esc(T6[S.lang].pPrice)}</p><p class="srcl">${esc(T6[S.lang].pSrc)}</p></div>${rideHtml()}
+      <div class="blk"><h3>${esc(t.pass)}</h3><p>${esc(t.passTxt)}</p><p>${esc(T6[S.lang].pPrice)}</p><p>${esc(T6[S.lang].pWhere)}</p><p>${esc(T6[S.lang].pCard)}</p><p class="note">${esc(T6[S.lang].pNot)}</p><p class="note">${esc(T6[S.lang].pReg)}</p><p class="note">💡 ${esc(T6[S.lang].pDisc)}</p><p class="note">${esc(T6[S.lang].pAsk)}</p><p class="srcl"><a href="https://world.seoul.go.kr/policy/transportation/climate-card/" target="_blank" rel="noopener">${esc(T6[S.lang].pSrc)}</a></p></div>${rideHtml()}
       <p class="srcl"><b>${esc(u3.srcData)}</b><br>${["trash","police","toilets","wifi"].map(k=>esc(D.sources[k])).join("<br>")}</p>`+srcLine;
   }else{
-    const row=(n,txt)=>`<div class="near"><span>${esc(txt)}</span><a class="big tel" href="tel:${n.replace(/-/g,"")}">${n}</a></div>`;
-    L.innerHTML=(STAYS[S.stay].info?`<div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(T6[S.lang].myAddr)}</button></div>`:"")+`<div class="blk">${row("119",u.e119)}${row("112",u.e112)}${row("1330",t.h1)}${row("120",t.h2)}${row("1588-5644",u.e1588)}</div>
+    const h=T8[S.lang],tel=n=>n.replace(/[^0-9+]/g,"");
+    const row=(n,[ti,de],alt)=>`<div class="call"><div><b>${esc(ti)}</b> <span class="chip">${esc(h.h24)}</span><small>${esc(de)}</small>${alt?`<small>${esc(h.alt)}: <a href="tel:${tel(alt)}">${alt}</a></small>`:""}</div><a class="big tel" href="tel:${tel(n)}">${n}</a></div>`;
+    L.innerHTML=holiHtml()+(STAYS[S.stay].info?`<div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(T6[S.lang].myAddr)}</button></div>`:"")+`<div class="blk">${row("119",h.n119)}${row("112",h.n112,"+82-2-313-0842")}${row("1330",h.n1330)}${row("120",h.n120,"+82-2-731-6800")}${row("114",h.n114)}${row("1588-5644",h.n1588)}</div>
+      <div class="blk"><h3>${esc(ERA[S.lang].t)}</h3><p>${esc(ERA[S.lang].d)}</p><p class="note">${esc(ERA[S.lang].how)}</p>
+        <p class="srcl"><a href="https://world.seoul.go.kr/service/living/disaster-evacuation-tips-citizens/emergency-ready-app/" target="_blank" rel="noopener">${esc(ERA[S.lang].src)}</a></p></div>
+      <div class="blk"><h3>${esc(h.mrs[0])} <span class="chip">${esc(h.h24)}</span></h3><p>${esc(h.mrs[1])}</p><p>${esc(h.mail)}: <a href="mailto:medicalreferral@seoul.go.kr">medicalreferral@seoul.go.kr</a></p></div>
       <div class="blk"><h3>${esc(u.hosp)}</h3><p>${esc(u.hospTxt)} · ☎ 1577-0083</p></div>
-      <div class="blk"><h3>${esc(u.medRef)}</h3><p>medicalreferral@seoul.go.kr</p></div>
       <div class="blk"><h3>${esc(u.post)}</h3><p>1588-1300</p></div>
       <div class="blk"><h3>${esc(t.h3)}</h3><p><a href="https://sb.go.kr/en/index.do" target="_blank" rel="noopener">sb.go.kr/en</a></p></div>
-      <div class="blk"><h3>${esc(t.h4)}</h3><p><a href="https://english.visitseoul.net" target="_blank" rel="noopener">english.visitseoul.net</a></p></div>`+srcLine;
+      <div class="blk"><h3>${esc(t.h4)}</h3><p><a href="https://english.visitseoul.net" target="_blank" rel="noopener">english.visitseoul.net</a></p></div>
+      <p class="srcl"><a href="${HELPSRC}" target="_blank" rel="noopener">${esc(T8[S.lang].src)}</a></p>`+srcLine;
   }
+}
+// 도움 탭 전화 · 의료 안내 — 출처: 서울특별시 영문 누리집 「Medical Facilities」 (world.seoul.go.kr/service/living/medical-facilities)
+// 표시 없는 자료 = 공공누리 4유형(출처 표시 · 변경 금지) → 영어는 원문 그대로, 중 · 일 · 한은 번역하지 않고 번호 · 사실만 우리 말로
+const HELPSRC="https://world.seoul.go.kr/service/living/medical-facilities/";
+const T8={
+ en:{h24:"24/7",alt:"Also",
+  n119:["Fire and Emergency","Call 119 when you need emergency assistance, including an ambulance. The ambulance is free. Interpreters are available. Information on hospitals, illness consultation, first aid and interpretation in English, Chinese, Japanese, Mongolian and Vietnamese."],
+  n112:["Police","Report crimes to the National Police Agency via an interpretation center."],
+  n1330:["Travel Assistance Service","Information on all matters relating to travel within Korea."],
+  n120:["Seoul Call Center / 120 Dasan Call Center","Answers your questions about living in Seoul and responds to suggestions or complaints."],
+  n114:["Telephone directory","Give the operator the name and address you are looking for to get the phone number."],
+  n1588:["Interpretation Service","Real-time interpretation by volunteers in 17 languages: English, Japanese, German, Russian, Italian, Spanish, French, Chinese, Portuguese, Arabic, Polish, Turkish, Swedish, Thai, Vietnamese, Indonesian, Malaysian."],
+  mrs:["Medical Referral Service (Seoul Global Center)","A 24-hour service for foreign nationals. Medically trained, English-speaking staff give information and recommendations on medical facilities and services."],
+  mail:"E-mail",src:"Source: Seoul Metropolitan Government, Medical Facilities"},
+ zh:{h24:"24小时",alt:"或",
+  n119:["火警 · 急救","救护车免费 · 有口译（英 · 中 · 日 · 蒙古 · 越南语）"],
+  n112:["警察","报案 · 可接通口译"],
+  n1330:["旅游咨询","旅游信息 · 口译"],
+  n120:["首尔呼叫中心 / 120茶山呼叫中心","首尔生活咨询 · 建议和投诉"],
+  n114:["电话号码查询","说出名称和地址即可查号"],
+  n1588:["口译服务","志愿者实时口译 · 17种语言"],
+  mrs:["医疗转介服务（首尔全球中心）","为外国人介绍医院 · 英语 · 24小时"],
+  mail:"电子邮件",src:"来源：首尔特别市「Medical Facilities」（英文原文）"},
+ ja:{h24:"24時間",alt:"または",
+  n119:["消防・救急","救急車は無料 · 通訳あり（英・中・日・モンゴル・ベトナム語）"],
+  n112:["警察","犯罪の通報 · 通訳につながる"],
+  n1330:["観光案内","旅行の案内 · 通訳"],
+  n120:["ソウルコールセンター / 120茶山コールセンター","ソウル生活の問い合わせ · 提案・苦情"],
+  n114:["電話番号案内","名前と住所を伝えると番号がわかる"],
+  n1588:["通訳サービス","ボランティアによるリアルタイム通訳 · 17言語"],
+  mrs:["医療案内サービス（ソウルグローバルセンター）","外国人向けの病院案内 · 英語 · 24時間"],
+  mail:"メール",src:"出典：ソウル特別市「Medical Facilities」（英語原文）"},
+ ko:{h24:"24시간",alt:"또는",
+  n119:["화재 · 응급","구급차 무료 · 통역 (영 · 중 · 일 · 몽골 · 베트남어)"],
+  n112:["경찰","범죄 신고 · 통역 연결"],
+  n1330:["관광 안내","여행 정보 · 통역"],
+  n120:["서울 콜센터 / 120 다산콜센터","서울 생활 문의 · 건의 · 불편 신고"],
+  n114:["전화번호 안내","이름과 주소를 말하면 번호를 알려 줌"],
+  n1588:["통역 서비스","자원봉사자 실시간 통역 · 17개 언어"],
+  mrs:["의료 안내 서비스 (서울글로벌센터)","외국인 대상 병원 안내 · 영어 · 24시간"],
+  mail:"이메일",src:"출처: 서울특별시 영문 누리집 「Medical Facilities」 (영어 원문)"}
+};
+// 재난 알림 앱 — 출처: 서울특별시 영문 누리집 「Emergency Ready App」 (영어는 원문 그대로)
+const ERA={
+ en:{t:"Emergency Ready App (disaster alerts)",d:"The Ministry of the Interior and Safety provides prompt and accurate disaster information in 22 languages, including English, Chinese, and Japanese, to help ensure the safety of foreign nationals residing in Korea.",
+  how:"(Installation) Download the Emergency Ready App (free) · Android: Google Play / iOS: App Store. (Configuration) Select your region, disaster alert settings, and language.",src:"Source: Seoul Metropolitan Government, Emergency Ready App"},
+ zh:{t:"Emergency Ready App（灾害警报）",d:"行政安全部 · 22种语言（含英 · 中 · 日）· 免费",how:"安装后选择地区、警报设置和语言。Android：Google Play / iOS：App Store",src:"来源：首尔特别市「Emergency Ready App」"},
+ ja:{t:"Emergency Ready App（災害アラート）",d:"行政安全部 · 22言語（英・中・日を含む）· 無料",how:"インストール後、地域・アラート設定・言語を選びます。Android：Google Play / iOS：App Store",src:"出典：ソウル特別市「Emergency Ready App」"},
+ ko:{t:"안전디딤돌 (Emergency Ready App · 재난 알림)",d:"행정안전부 · 22개 언어 (영 · 중 · 일 포함) · 무료",how:"설치한 뒤 지역 · 알림 설정 · 언어를 골라요. 안드로이드: Google Play / 아이폰: App Store",src:"출처: 서울특별시 영문 누리집 「Emergency Ready App」"}
+};
+// 연휴 안내 (연휴 3일 전 ~ 마지막 날 맨 위에 표시) — 날짜: 월력요항 · 문 연 병원 · 약국 120 · 119: 서울시 「2026 Chuseok Holiday Information」
+const HOLI=[
+ {s:"2026-12-25",e:"2026-12-25",n:{en:"Christmas",zh:"圣诞节",ja:"クリスマス",ko:"성탄절"}},
+ {s:"2027-01-01",e:"2027-01-01",n:{en:"New Year's Day",zh:"元旦",ja:"元日",ko:"신정"}},
+ {s:"2027-02-06",e:"2027-02-09",n:{en:"Seollal (Lunar New Year)",zh:"春节（설날）",ja:"旧正月（ソルラル）",ko:"설날 연휴"}},
+ {s:"2027-09-14",e:"2027-09-16",n:{en:"Chuseok (Korean Thanksgiving)",zh:"中秋节（추석）",ja:"秋夕（チュソク）",ko:"추석 연휴"}}
+];
+const HOLIT={en:{h:"Public holiday",t:"Many shops, clinics and pharmacies may be closed. For hospitals and pharmacies open during the holiday, call 120 or 119."},
+ zh:{h:"公休日",t:"许多商店、诊所和药店可能休息。假期营业的医院、药店请拨打120或119查询。"},
+ ja:{h:"祝日",t:"多くの店・医院・薬局が休みの場合があります。連休中に開いている病院・薬局は120か119へ。"},
+ ko:{h:"공휴일",t:"가게 · 병원 · 약국이 많이 쉴 수 있어요. 연휴에 문 연 병원 · 약국은 120이나 119에 물어보세요."}};
+function todayStr(){const q=qs.get("date");if(q&&/^\d{4}-\d{2}-\d{2}$/.test(q))return q;const d=new Date(Date.now()+9*3600e3);return d.toISOString().slice(0,10);}   // ?date= 로 시연 가능
+function holiHtml(){
+  const td=todayStr(),pre=x=>{const d=new Date(x+"T00:00:00Z");d.setUTCDate(d.getUTCDate()-3);return d.toISOString().slice(0,10);};
+  const h=HOLI.find(x=>td>=pre(x.s)&&td<=x.e);if(!h)return "";
+  const f=x=>x.slice(5).replace("-","/"),t=HOLIT[S.lang];
+  return `<div class="holi"><b>${esc(t.h)} · ${esc(L4(h.n))}</b> <span class="num">${f(h.s)}${h.e!==h.s?"–"+f(h.e):""}</span><small>${esc(t.t)}</small></div>`;
 }
 function setTab(i){if(i!==S.tab){S.compact=true;S.wx=null;}S.tab=i;render();if(i===3){loadNear();loadLife();}}
 function defaultZone(){const dn=S.stay==="B"?"성북동":"삼선동";const i=D.trash.findIndex(z=>z.areas.includes(dn));return i<0?0:i;}
@@ -1231,12 +1398,28 @@ const evCat=c=>{const v=EVCAT[c];return showKo()||!v?c:v[{en:0,zh:1,ja:2}[S.lang
 function evHtml(){
   if(!D||!D.events.length)return "";
   const u3=T3[S.lang],st=STAYS[S.stay],td=new Date().toISOString().slice(0,10);
-  return `<p class="sec">${esc(u3.evLive)}</p>`+D.events.map((e,i)=>{const on=e.start<=td;
+  const cats=[...new Set(D.events.map(e=>e.cat).filter(Boolean))];
+  const chips=cats.length>1?`<div class="evchips"><button type="button" class="${S.evcat?"":"on"}" onclick="S.evcat=null;renderList()">${esc(T9[S.lang].all)}</button>`+cats.map(c=>`<button type="button" class="${S.evcat===c?"on":""}" onclick="S.evcat=${esc(JSON.stringify(c))};renderList()">${esc(evCat(c))}</button>`).join("")+`</div>`:"";
+  return `<p class="sec">${esc(u3.evLive)}</p>`+chips+D.events.map((e,i)=>{if(S.evcat&&e.cat!==S.evcat)return "";const on=e.start<=td;
     return `<div class="ev"${e.lat?` onclick="focusEv(${i})" style="cursor:pointer"`:""}><span class="when">${esc(e.start.slice(5).replace("-","/"))} – ${esc(e.end.slice(5).replace("-","/"))}</span>${on?` <span class="chip in">${esc(u3.ongoing)}</span>`:""}
       <h3>${esc(e.title)}</h3>${aiLine("event",e.title)}<p class="note" style="margin:0">${esc(e.place)}${e.time?" · "+esc(e.time):""}</p>
       <div class="hrs">${e.cat?`<span class="chip">${esc(evCat(e.cat))}</span>`:""}<span class="chip ${e.free==="무료"?"in":""}">${esc(e.free==="무료"?u3.free:u3.paid)}</span>${e.fee&&e.free!=="무료"?`<span>${esc(e.fee)}</span>`:""}${e.lat?`<span class="d" style="color:var(--navy);font-weight:700">${fmt(km(st,e))}</span>`:""}${(e.lat?walkLink(e.place,e.lat,e.lng):"")+(e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(u3.more)}</a>`:"")}</div></div>`;}).join("")
     +`<p class="note">${esc(u3.evKo)}</p><p class="srcl">${esc(D.sources.events)}</p>`;
 }
+// 서울 전체 큰 축제 (서울시 문화행사 중 분류 「축제」 · 성북구 밖 · 지금 ~ 3주 안) — 서버 /api/events 의 seoul
+const T9={en:{all:"All",seoulT:"Big festivals across Seoul",seoulN:"From Seoul's culture event data · tap to see the route",more:"Also see: Seoul's official events page"},
+ zh:{all:"全部",seoulT:"首尔各地的大型节庆",seoulN:"来自首尔文化活动数据 · 点击查看路线",more:"也可查看：首尔市官方活动页面"},
+ ja:{all:"すべて",seoulT:"ソウル各地の大きなお祭り",seoulN:"ソウル文化イベントデータより · タップでルート表示",more:"ソウル市公式イベントページもどうぞ"},
+ ko:{all:"전체",seoulT:"서울 곳곳의 큰 축제",seoulN:"서울시 문화행사 데이터 · 누르면 길 안내",more:"서울시 공식 행사 페이지도 보기"}};
+function seoulHtml(){
+  const v=T9[S.lang],u3=T3[S.lang],st=STAYS[S.stay],td=todayStr(),list=(D&&D.seoul)||[];
+  return `<p class="sec">${esc(v.seoulT)}</p>`+(list.length?`<p class="note" style="margin:0 0 6px">${esc(v.seoulN)}</p>`+list.map((e,i)=>`<div class="ev"${e.lat?` onclick="focusSeoul(${i})" style="cursor:pointer"`:""}><span class="when">${esc(e.start.slice(5).replace("-","/"))} – ${esc(e.end.slice(5).replace("-","/"))}</span>${e.start<=td?` <span class="chip in">${esc(u3.ongoing)}</span>`:""}
+      <h3>${esc(e.title)}</h3>${aiLine("event",e.title)}<p class="note" style="margin:0">${esc(e.gu)} · ${esc(e.place)}${e.time?" · "+esc(e.time):""}</p>
+      <div class="hrs"><span class="chip ${e.free==="무료"?"in":""}">${esc(e.free==="무료"?u3.free:u3.paid)}</span>${e.lat?`<span class="d" style="color:var(--navy);font-weight:700">${fmt(km(st,e))}</span>`+busLinkOnly(e.place,e.lat,e.lng):""}${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(u3.more)}</a>`:""}</div></div>`).join(""):"")
+    +`<p class="srcl"><a href="https://world.seoul.go.kr/category/news/events-announcements/" target="_blank" rel="noopener">${esc(v.more)} ↗</a></p>`;
+}
+function focusSeoul(i){const e=D.seoul[i];if(e&&e.lat)showRoute(e.lat,e.lng,e.place);}
+function busLinkOnly(name,lat,lng){return `<a class="walk" href="${busUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T6[S.lang].bus)}</a>`;}
 function focusEv(i){const e=D.events[i];showRoute(e.lat,e.lng,e.place);}
 // 시연판: 숫자로 본 성북
 function renderStats(){
@@ -1399,7 +1582,7 @@ if(S.tab===0)loadTour();
 // 공공데이터 정리본 · 기상청 실제 예보 불러오기 (없으면 v1처럼 시연 값으로 동작)
 fetch("sp_data.json").then(r=>r.json()).then(j=>{D=j;renderStats();render();geocodePolice();
   // 서울 열린데이터광장 문화행사 실시간 (실패하면 sp_data.json 의 저장본 그대로)
-  apiGet("/api/events").then(e=>{if(e.ok&&e.events.length){D.events=e.events;D.sources.events=e.src+" · 실시간";render();}});}).catch(()=>{document.getElementById("stats").innerHTML='<span class="note">sp_data.json 을 찾지 못했어요</span>';});
+  apiGet("/api/events").then(e=>{if(e.ok&&e.events.length){D.events=e.events;D.sources.events=e.src+" · 실시간";}if(e.ok&&e.seoul){D.seoul=e.seoul;}if(e.ok)render();});}).catch(()=>{document.getElementById("stats").innerHTML='<span class="note">sp_data.json 을 찾지 못했어요</span>';});
 fetch("/api/weather").then(r=>r.json()).then(j=>{
   if(j.ok&&j.hours&&j.hours.length){LIVE=j;document.querySelector('#wSeg [data-w="live"]').hidden=false;S.w="live";S.wx=null;render();}
   else document.getElementById("wNote").textContent="실제 예보 미연결 · 시연 값 ("+(j.reason||"")+")";
