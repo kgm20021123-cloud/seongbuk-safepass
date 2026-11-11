@@ -185,16 +185,22 @@ select.lang{height:32px;border:1px solid var(--stone);border-radius:6px;padding:
 .panel,.list{min-width:0}
 html,body{overflow-x:clip}
 @media(max-width:380px){.tabs button{font-size:11.5px!important;letter-spacing:-.02em}}   /* 2px 이하 반올림 넘침 숨김 (sticky 는 그대로 동작) */.list{overflow-wrap:break-word}
-/* 지도: 일반 / 위성 바꾸기 */
-.mtype{position:absolute;z-index:6;top:12px;right:12px;display:flex;gap:8px}
-.mtype[hidden]{display:none}
-.mtype button{width:54px;padding:0;border:0;background:none;cursor:pointer;position:relative}
-.mtype span{display:block;width:46px;height:46px;margin:0 auto;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
-.mt-road span{background:linear-gradient(115deg,transparent 44%,#fff 44% 52%,transparent 52%),linear-gradient(20deg,transparent 60%,#F6D58E 60% 66%,transparent 66%),linear-gradient(160deg,#E8EFE3 0 50%,#EEEAE1 50%)}
-.mt-sky span{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.75) 44% 49%,transparent 49%),radial-gradient(circle at 30% 30%,#6E8F5A 0 22%,transparent 23%),radial-gradient(circle at 70% 65%,#8C7B62 0 25%,transparent 26%),linear-gradient(160deg,#4F6B45,#3B4A3C)}
-.mtype button[aria-pressed="true"] span{border-color:#2B6CB0}
-.mtype button[aria-pressed="true"]::after{content:"✓";position:absolute;top:-2px;right:2px;width:18px;height:18px;border-radius:50%;background:#2B6CB0;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
-.mtype small{display:inline-block;margin-top:3px;padding:0 6px;border-radius:8px;background:rgba(255,255,255,.92);font-size:11px;font-weight:700;color:var(--giwa);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+/* 지도: 일반 / 위성 바꾸기 (흰 알약 안 동그라미 2개 · 선택 = 파란 테두리 + 체크) · 내 위치 */
+.mapctl{position:absolute;z-index:6;top:12px;right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.mapctl[hidden]{display:none}
+.mtype{display:flex;gap:8px;padding:6px;background:#fff;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.mtype button{width:44px;height:44px;padding:0;border:0;border-radius:50%;cursor:pointer;position:relative;background-size:cover;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.mtype .mt-road{background:linear-gradient(115deg,transparent 44%,#fff 44% 52%,transparent 52%),linear-gradient(20deg,transparent 60%,#F6D58E 60% 66%,transparent 66%),linear-gradient(160deg,#E8EFE3 0 50%,#EEEAE1 50%)}
+.mtype .mt-sky{background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.7) 44% 49%,transparent 49%),linear-gradient(25deg,transparent 58%,rgba(255,255,255,.55) 58% 62%,transparent 62%),radial-gradient(circle at 30% 30%,#6E8F5A 0 22%,transparent 23%),radial-gradient(circle at 70% 70%,#556B4A 0 25%,transparent 26%),linear-gradient(160deg,#4F6B45,#33402F)}
+.mtype button[aria-pressed="true"]{background:#fff!important;box-shadow:inset 0 0 0 3px #1E7BE6}
+.mtype button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:9px;border-left:3px solid #1E7BE6;border-bottom:3px solid #1E7BE6;transform:translate(-50%,-70%) rotate(-45deg)}
+.myloc{width:44px;height:44px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.22);cursor:pointer;display:grid;place-items:center}
+.myloc svg{width:22px;height:22px;fill:none;stroke:var(--giwa);stroke-width:2;stroke-linecap:round}
+.myloc.on svg{stroke:#1E7BE6}.myloc.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.me-dot{width:16px;height:16px;border-radius:50%;background:#1E7BE6;border:3px solid #fff;box-shadow:0 0 0 6px rgba(30,123,230,.22),0 1px 4px rgba(0,0,0,.4)}
+.maptoast{position:absolute;z-index:8;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--giwa);color:#fff;font-size:13px;padding:8px 14px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.maptoast[hidden]{display:none}
 #map.sky .ov{box-shadow:0 1px 6px rgba(0,0,0,.55);border-color:#fff}
 #map.sky .pin{box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.6)}
 /* 지도를 누른 곳 카드 */
@@ -360,12 +366,126 @@ select.zone{display:block;width:100%;min-width:0}
   .list{padding-top:4px}
   .wx .sum strong{font-size:24px}
 }
+/* ===== 팀 프롬프트 기능 (SOS · 지도 칩 · 길찾기 · 보여 주기 · 음성 · 배너 · 온보딩 · 코스 · 필터 · 접근성) ===== */
+:root{--sos:#D7263D}
+body.noscroll{overflow:hidden}
+.sosbtn{position:fixed;z-index:70;right:16px;bottom:24px;width:60px;height:60px;border-radius:50%;border:3px solid #fff;background:var(--sos);color:#fff;font-weight:800;font-size:16px;letter-spacing:.04em;box-shadow:0 4px 14px rgba(215,38,61,.45);cursor:pointer}
+@media(max-width:950px){.sosbtn{bottom:calc(72px + env(safe-area-inset-bottom));right:12px;width:56px;height:56px}}
+body.night .sosbtn{animation:sospulse 1.6s ease-in-out infinite}
+@keyframes sospulse{0%,100%{box-shadow:0 4px 14px rgba(215,38,61,.45)}50%{box-shadow:0 0 0 10px rgba(215,38,61,.18),0 4px 14px rgba(215,38,61,.45)}}
+.sos{position:fixed;inset:0;z-index:90;background:var(--hanji);overflow:auto;-webkit-overflow-scrolling:touch}
+.sos[hidden]{display:none}
+.sos-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;background:var(--sos);color:#fff;padding:12px 16px;font-size:18px}
+.sos-x{width:44px;height:44px;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:26px;border-radius:50%;cursor:pointer}
+.sos-body{max-width:640px;margin:0 auto;padding:12px 16px 40px}
+.sos-calls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sos-call{display:flex;flex-direction:column;gap:2px;min-height:76px;padding:10px 12px;border-radius:12px;background:#fff;border:2px solid var(--sos);color:var(--giwa);text-decoration:none}
+.sos-call b{font-size:26px;color:var(--sos);font-family:var(--serif);line-height:1.1}.sos-call span{font-size:12.5px;line-height:1.35}
+.sos-addr{margin-top:12px;background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--stone)}
+.sos-addr h4,.sos-sec h4,.sos-era h4{margin:0 0 6px;font-size:14px}
+.sos-big{font-size:28px;line-height:1.35;font-weight:800;margin:4px 0;word-break:keep-all}
+.sos-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.sos-mini{min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;border:1px solid var(--giwa);background:#fff;color:var(--giwa);font-weight:700;font-size:13.5px;text-decoration:none;cursor:pointer}
+.sos-h3{margin:18px 0 6px;font-family:var(--serif);font-size:18px}.sos-h3 small{font-family:var(--sans);font-size:12px;color:var(--giwa-2);font-weight:400}
+.sos-sec{background:#fff;border-radius:12px;padding:10px 14px;margin-top:8px;border:1px solid var(--stone-2)}
+.sos-it{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--stone-2)}.sos-it:first-of-type{border-top:0}
+.sos-it b{display:block;font-size:14px}.sos-it small{display:block;font-size:12.5px;color:var(--giwa-2)}
+.sos-it .sos-act{margin:0;flex-direction:column;gap:6px}.sos-it .sos-mini{min-height:40px;font-size:12.5px;padding:0 10px}
+.sos-it .ok{color:var(--celadon);font-weight:700}.sos-it .no{color:var(--giwa);font-weight:700}
+.sos-sit{background:#fff;border-radius:10px;padding:4px 14px;margin-top:6px;border:1px solid var(--stone-2)}
+.sos-sit summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}.sos-sit p{margin:4px 0 8px;font-size:13.5px}
+.sos-era{margin-top:16px;background:#fff;border-radius:12px;padding:12px 14px;border:1px solid var(--stone-2)}
+/* 길찾기 · 틀렸어요 아래 시트 */
+.sheet{position:fixed;inset:0;z-index:95;background:rgba(20,28,36,.42);display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.rs-box{width:min(420px,100%);background:#fff;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:grid;gap:8px}
+@media(min-width:951px){.sheet{align-items:center}.rs-box{border-radius:16px}}
+.rs-t{margin:0 0 4px;font-weight:700}.rs-t small{display:block;font-weight:400;color:var(--giwa-2);font-size:12.5px}
+.rs-b{min-height:48px;display:flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--stone);background:var(--hanji);color:var(--giwa);font-weight:700;text-decoration:none;font-size:15px;cursor:pointer}
+.rs-x{min-height:44px;border:0;background:none;color:var(--giwa-2);font-size:14px;cursor:pointer}
+.wr{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px}
+.rbtn,.skbtn{border:0;background:none;padding:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;color:var(--celadon);text-decoration:underline}
+.wrong{border:0;background:none;padding:0;cursor:pointer;font-size:11.5px;color:var(--giwa-2);text-decoration:underline}
+.toast{position:fixed;z-index:120;left:50%;bottom:calc(140px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--giwa);color:#fff;padding:10px 16px;border-radius:999px;font-size:13.5px;max-width:calc(100% - 32px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.toast[hidden]{display:none}
+/* 한국인에게 보여 주기 */
+.skr{position:fixed;inset:0;z-index:110;background:#fff;color:#000;overflow:auto;display:flex;flex-direction:column}
+.skr[hidden]{display:none}
+.sk-top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #ddd;font-size:13px;color:#555}
+.sk-x{width:44px;height:44px;border:0;background:#f1f1f1;border-radius:50%;font-size:26px;cursor:pointer}
+.sk-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 20px;min-height:40vh}
+.sk-ko{font-size:clamp(30px,8vw,56px);font-weight:800;line-height:1.35;margin:0;word-break:keep-all}
+.sk-tr{font-size:16px;color:#444;margin:14px 0 0}
+.sk-say{align-self:flex-start;margin-top:14px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #bbb;background:#fff;font-size:14px;cursor:pointer}
+.sk-fill,.sk-pick{padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sk-fill b,.sk-pick b{width:100%;font-size:12.5px;color:#555}
+.sk-fill button,.sk-pick button{min-height:40px;border:1px solid #ccc;background:#fafafa;border-radius:20px;padding:6px 12px;font-size:13px;text-align:left;cursor:pointer}
+.sk-fill button.on,.sk-pick button.on{background:#000;color:#fff;border-color:#000}
+.sk-note{font-size:11.5px;color:#777;padding:4px 16px 16px;margin:0}
+@media(orientation:landscape) and (max-height:500px){.sk-main{min-height:auto;padding:12px 20px}.sk-ko{font-size:clamp(26px,6vh,44px)}}
+/* 음성 */
+.say{border:1px solid var(--stone);background:var(--paper);border-radius:999px;min-width:32px;height:28px;font-size:13px;cursor:pointer;vertical-align:middle;margin-left:4px}
+.say.on{background:var(--celadon);border-color:var(--celadon)}.say:disabled{opacity:.35;cursor:not-allowed}
+/* 오늘 배너 */
+.tbs{margin:8px 0 4px}.tbs-t{margin:0 0 4px;font-size:12px;font-weight:700;color:var(--giwa-2)}
+.tb{position:relative;background:var(--paper);border:1px solid var(--stone-2);border-left:3px solid var(--celadon);border-radius:8px;padding:8px 40px 8px 12px;margin:4px 0;font-size:13.5px;line-height:1.5}
+.tb a{color:var(--celadon);font-weight:700;margin-left:4px}
+.tb-x{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:none;font-size:18px;color:var(--giwa-2);cursor:pointer}
+/* 지도 칩 · 핀 */
+.mapchips{position:absolute;z-index:6;left:12px;top:12px;right:150px;display:flex;flex-wrap:wrap;gap:6px}
+.mapchips button{min-height:34px;display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;background:#fff;color:var(--giwa);padding:0 11px 0 6px;font-size:12.5px;font-weight:700;box-shadow:0 1px 5px rgba(0,0,0,.22);cursor:pointer}
+.mapchips i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font-size:10px}
+.mapchips button[aria-pressed="true"]{background:var(--c);color:#fff}.mapchips button[aria-pressed="true"] i{background:#fff;color:var(--c)}
+.lp{width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--c);color:#fff;font-size:10px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:pointer;padding:0}
+.cpin{background:var(--celadon);color:#fff;border:2px solid #fff;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.cpin b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#fff;color:var(--celadon);margin-right:5px;font-size:11px}.cpin small{margin-left:6px;opacity:.85}
+/* 반나절 코스 */
+.course{background:var(--paper);border:1px solid var(--stone);border-radius:10px;padding:12px 14px;margin:10px 0}
+.course h3{margin:0 0 6px;font-family:var(--serif);font-size:16.5px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.course ol{margin:0;padding-left:20px}.course li{margin:3px 0;font-size:13.5px}.course .cm{display:inline-block;min-width:38px;color:var(--giwa-2);font-size:12px}
+.seg-mini{border:1px solid var(--stone);background:var(--hanji);border-radius:999px;padding:4px 10px;font-size:12px;font-family:var(--sans);font-weight:600;cursor:pointer;min-height:32px}
+/* 메뉴 필터 */
+.mfil{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 8px;font-size:12.5px}
+.mfil .t{width:100%;color:var(--giwa-2);font-size:11.5px}
+.mfil button,.mfil select{min-height:34px;border:1px solid var(--stone);background:var(--paper);border-radius:999px;padding:0 11px;font-size:12.5px;color:var(--giwa);cursor:pointer}
+.mfil button[aria-pressed="true"]{background:var(--giwa);color:#fff;border-color:var(--giwa)}
+.mtag{display:inline-block;font-size:11px;border:1px solid var(--stone);border-radius:4px;padding:0 5px;margin-right:4px;color:var(--giwa-2)}
+.chip.slope{background:#F6E4DF;color:#8A3A2A}
+/* 첫날 가이드 */
+.onb{position:fixed;inset:0;z-index:100;background:rgba(20,28,36,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.onb[hidden]{display:none}
+.onb-box{width:min(440px,100%);max-height:92vh;overflow:auto;background:var(--paper);border-radius:16px;padding:18px 18px 14px}
+.onb-step{margin:0;color:var(--giwa-2);font-size:12px}.onb-box h3{margin:2px 0 10px;font-family:var(--serif);font-size:21px}
+.onb-big{font-size:17px;font-weight:700;margin:6px 0}
+.onb-lang{display:grid;grid-template-columns:1fr 1fr;gap:8px}.onb-lang button{min-height:52px;border:1px solid var(--stone);border-radius:10px;background:var(--hanji);font-size:16px;cursor:pointer}
+.onb-lang button.on{background:var(--giwa);color:#fff}
+.onb-icons{font-size:34px;display:flex;gap:14px}
+.onb-calls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.onb-calls a{min-height:48px;display:grid;place-items:center;border:2px solid var(--sos);border-radius:10px;color:var(--sos);font-weight:800;text-decoration:none}
+.onb-arrow{text-align:right;font-size:22px}.demo-sos{position:static;display:inline-grid;place-items:center;width:46px;height:46px;font-size:13px;vertical-align:middle;animation:none}
+.onb-dots{display:flex;justify-content:center;gap:6px;margin:14px 0 8px}.onb-dots i{width:8px;height:8px;border-radius:50%;background:var(--stone)}.onb-dots i.on{background:var(--celadon);width:20px;border-radius:4px}
+.onb-nav{display:flex;justify-content:space-between;align-items:center}
+/* 오프라인 · 접근성 */
+.offbar{position:sticky;top:0;z-index:60;background:var(--amber);color:#fff;text-align:center;font-size:13px;padding:6px 12px}
+.offbar[hidden]{display:none}
+.a11y{min-width:40px;height:36px;border:1px solid var(--stone);background:var(--paper);border-radius:8px;font-weight:800;color:var(--giwa);cursor:pointer}
+.a11y[aria-pressed="true"]{background:var(--giwa);color:#fff}
+html[data-size="1"] .list,html[data-size="1"] .sos-body,html[data-size="1"] .skr{zoom:1.12}
+html[data-size="2"] .list,html[data-size="2"] .sos-body,html[data-size="2"] .skr{zoom:1.25}
+@media(max-width:600px){.hd-r .a11y{display:none}}
+.a11y-row{display:flex;gap:8px;align-items:center;margin:8px 0 4px;font-size:13px}.a11y-row .a11y{min-width:44px;height:44px}
+html.hicon{--giwa:#000;--giwa-2:#1f1f1f;--stone:#5a5a5a;--stone-2:#8a8a8a;--celadon:#00563F;--hanji:#fff}
+html.hicon a{text-decoration:underline}html.hicon .chip{border:1px solid #000}
+/* 시연판 접기 */
+.demo.fold>div:not(.demo-tog-row),.demo.fold>p{display:none}
+.demo-tog-row{display:flex;justify-content:flex-end}
+.demo-tog{border:1px solid var(--stone);background:var(--paper);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer}
 </style>
 </head>
 <body>
 <header>
   <div class="logo" onclick="go('home')"><img src="sp-icon-192.png" alt=""><b>SafePass <span class="kn">세이프패스</span></b><small id="tagline"></small></div>
   <div class="hd-r">
+    <button type="button" class="a11y" id="aSize" onclick="cycleSize()">가</button><button type="button" class="a11y" id="aHc" onclick="toggleHc()" aria-pressed="false">◐</button>
     <select class="lang" id="lang" aria-label="Language">
       <option value="en">🌐 EN</option><option value="zh">🌐 中文</option><option value="ja">🌐 日本語</option><option value="ko">🌐 한국어</option>
     </select>
@@ -390,9 +510,10 @@ select.zone{display:block;width:100%;min-width:0}
     <div class="foot" id="foot"></div>
   </aside>
 
-  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div><div class="mtype" id="mtype" hidden></div><div class="pcard" id="pcard" hidden role="dialog"></div></section>
+  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div><div class="mapchips" id="mapchips"></div><div class="mapctl" id="mapctl" hidden><div class="mtype" id="mtype"></div><button type="button" class="myloc" id="myloc" onclick="myLocation()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button></div><div class="maptoast" id="maptoast" hidden></div><div class="pcard" id="pcard" hidden role="dialog"></div></section>
 
-  <aside class="demo" aria-label="시연 조작판">
+  <aside class="demo" id="demoPanel" aria-label="시연 조작판">
+    <div class="demo-tog-row"><button type="button" class="demo-tog" onclick="const d=document.getElementById('demoPanel');d.classList.toggle('fold');this.textContent=d.classList.contains('fold')?'시연 패널 펼치기 ▾':'시연 패널 접기 ▴'">시연 패널 접기 ▴</button></div>
     <div>
       <h4>1. QR 찍기 (같은 와이파이의 휴대전화)</h4>
       <div class="qrs">
@@ -419,6 +540,13 @@ select.zone{display:block;width:100%;min-width:0}
     </div>
     </div>
     <div>
+      <h4>3-1. 시간대 시나리오</h4>
+      <div class="seg" id="tSeg">
+        <button data-t="">🕒 실제 시각</button><button data-t="8">🌅 아침</button><button data-t="19">🌆 저녁</button><button data-t="23">🌙 심야</button><button data-t="day">📅 요일 +1</button>
+      </div>
+      <span class="wn" id="tNote"></span>
+    </div>
+    <div>
       <h4>4. 숫자로 본 성북 (공공데이터)</h4>
       <div class="stat" id="stats"><span class="note">불러오는 중…</span></div>
       <label class="note" style="display:block;margin-top:8px"><input type="checkbox" id="stayLayer"> 지도에 성북구 등록 숙소 표시</label>
@@ -433,6 +561,11 @@ select.zone{display:block;width:100%;min-width:0}
         <li>행사: 서울문화포털 성북 행사 (날짜 · 요금 · 링크)</li>
         <li>생활: 삼선동 쓰레기 요일 · 화장실 · 와이파이 · 가까운 지구대/파출소</li>
         <li>숙소 B QR → 성북동 기준으로 요일 · 시설이 바뀜</li>
+        <li>SOS 버튼 → 1330 버튼, 숙소 주소 카드, 가까운 약국 확인</li>
+        <li>혜화문 카드 「한국어로 보여 주기」 → 택시 · 길 묻기 문장</li>
+        <li>먹거리 → 비빔밥 🔊 한국어 발음 듣기</li>
+        <li>시간대 「저녁」 → 쓰레기 배출 배너, 「심야」 → 편의점 · SOS 강조</li>
+        <li>숙소 B로 바꾸고 SOS → 주소 · 가까운 시설이 성북동 기준으로</li>
       </ol>
     </div>
     <p class="note">숙소 A · B는 가상입니다. 날씨(기상청) · 문화행사(서울 열린데이터광장) · 관광정보(한국관광공사) · 백년가게 · 주민센터 · 봉투 판매소(공공데이터포털)는 실시간으로 받아 오고, 쓰레기 요일 · 화장실 · 와이파이 · 지구대/파출소 · 한식 메뉴 · 한양도성 안내는 sp_data.json 저장본입니다. 미세먼지는 아직 시연 값입니다.</p>
@@ -444,6 +577,13 @@ select.zone{display:block;width:100%;min-width:0}
   <p class="taxi-addr" id="taxiAddr"></p>
   <button class="taxi-x" id="taxiX"></button>
 </div>
+<div class="offbar" id="offbar" hidden></div>
+<button type="button" class="sosbtn" id="sosBtn" onclick="openSOS()" aria-label="SOS">SOS</button>
+<div class="sos" id="sos" hidden role="dialog" aria-modal="true"></div>
+<div class="skr" id="skr" hidden role="dialog" aria-modal="true"></div>
+<div class="sheet" id="rsheet" hidden onclick="if(event.target===this)this.hidden=true"></div>
+<div class="sheet" id="wrongDlg" hidden onclick="if(event.target===this)this.hidden=true"></div>
+<div class="onb" id="onb" hidden></div>
 <div class="install-tip" id="installTip" hidden><span id="installTipTxt"></span><button aria-label="닫기" onclick="this.parentNode.hidden=true">×</button></div>
 
 <script>
@@ -763,8 +903,8 @@ function rideHtml(){const r=RIDE[S.lang];
     `<p class="note">${esc(r.tr)}</p><p class="srcl">${esc(r.src)} · <a href="https://world.seoul.go.kr/service/movement/public-transportation/" target="_blank" rel="noopener">world.seoul.go.kr</a> · <a href="http://www.seoulmetro.co.kr/en/page.do?menuIdx=719" target="_blank" rel="noopener">seoulmetro.co.kr</a></p></div>`;}
 // 카카오맵 대중교통 길찾기: 숙소 → 장소
 function busUrl(name,lat,lng){return walkUrl(name,lat,lng).replace("/link/by/walk/","/link/by/traffic/");}
-function walkLink(name,lat,lng){return `<a class="walk" href="${walkUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T4[S.lang].walkDir)}</a><a class="walk" href="${busUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T6[S.lang].bus)}</a>`;}
-const walkMin=d=>Math.max(1,Math.round(d*1.5*1000/80));   // 직선거리 × 1.5, 분속 80m (카카오맵 도보 결과와 비슷하게 맞춤)
+function walkLink(name,lat,lng){return `<a class="walk" href="${walkUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T4[S.lang].walkDir)}</a><a class="walk" href="${busUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T6[S.lang].bus)}</a>${routeBtn(name,lat,lng)}`;}
+const walkMin=d=>Math.max(1,Math.round(d*WALK.detour*1000/WALK.mpm));   // 직선거리 × 1.5, 분속 80m (카카오맵 도보 결과와 비슷하게 맞춤)
 // ---------- 숙소 상세 (시연용 가상 데이터 · 에어비앤비식 구성) ----------
 // 지금은 숙소 A만 · 사진: public/stay/a1.jpg … a5.jpg (없으면 사진 칸만 안 보임, .png 도 됨)
 const L4=o=>o[S.lang]||o.en;
@@ -1147,7 +1287,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const nm=o=>S.lang==="ko"?o.ko:o.n[S.lang];
 function km(a,b){const R=6371,r=x=>x*Math.PI/180,dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);
   const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
-const fmt=d=>d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km";
+const fmt=d=>(d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km")+(d<=3&&typeof T12!=="undefined"?`<small class="wk">${esc(wkTxt(d))}</small>`:"");
 
 
 // ---------- 통합 날씨 (기상청 단기예보 · 에어코리아 형식의 시연 값) ----------
@@ -1255,23 +1395,25 @@ function render(){
   document.querySelectorAll("#staySeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.stay===S.stay));
   document.querySelectorAll("#wSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.w===S.w));
   renderList(); drawMarkers(); renderMapType(); if(PC)renderPlaceCard();
+  renderChips(); drawLayers(); applyA11y(); renderSOS(); document.getElementById("sosBtn").setAttribute("aria-label",V().sosT);
 }
 function sortedSpots(){const st=STAYS[S.stay],bad=eff()!=="good";
   return SPOTS.map(s=>({...s,dist:km(st,s)})).sort((a,b)=>bad?(b.indoor-a.indoor)||(a.dist-b.dist):a.dist-b.dist);}
 function sortedFood(){const st=STAYS[S.stay];return FOOD.map(f=>({...f,dist:km(st,f)})).sort((a,b)=>a.dist-b.dist);}
 
-function renderList(){
+function renderList(){renderList0();const L=document.getElementById("list");if(L)L.insertAdjacentHTML("afterbegin",todayBanners());}
+function renderList0(){
   const t=T[S.lang],u=T2[S.lang],L=document.getElementById("list"),st=STAYS[S.stay];
   const srcLink=k=>`<a href="${SBEN(k)}" target="_blank" rel="noopener">${esc(u.source)}</a>`;
   const srcLine=`<p class="srcl"><a href="https://sb.go.kr/en/index.do" target="_blank" rel="noopener">${esc(u.srcLine)}</a></p>`;
   if(S.tab===5){
     L.innerHTML=holiHtml()+stayHtml();
   }else if(S.tab===0){
-    L.innerHTML=sortedSpots().map((s,i)=>{const o=openState(s);return `<div class="item" onclick="focusPlace('${s.ko}')">
+    L.innerHTML=courseHtml()+sortedSpots().map((s,i)=>{const o=openState(s);return `<div class="item" onclick="focusPlace('${s.ko}')">
       <span class="no" style="background:${s.indoor?"var(--ok)":"var(--warn)"}">${i+1}</span>
-      <h3>${esc(nm(s))}${S.lang==="ko"?"":`<span class="orig">${esc(s.ko)}</span>`}</h3><span class="d">${fmt(s.dist)}</span>
-      <div class="meta"><span class="chip ${s.indoor?"in":"out"}">${s.indoor?t.indoor:t.outdoor}</span>${s.gu==="jn"?`<span class="chip ext">${t.outside}</span>`:""}${s.gu==="bd"?`<span class="chip bd">${esc(u.border)}</span>`:""}${esc(s.d[S.lang])}</div>
-      <div class="hrs"><span class="chip ${o.cls}">${esc(o.txt)}</span>${o.line?`<span>${esc(o.line)}</span>`:""}${s.tel?`<span>☎ ${s.tel}</span>`:""}${s.src==="gu"?srcLink(s.key):`<span class="note">${esc(u.other)}</span>`}${walkLink(s.ko,s.lat,s.lng)}</div>
+      <h3>${esc(nm(s))}${S.lang==="ko"?"":`<span class="orig">${esc(s.ko)}</span>`}${sayBtn(s.ko,"ko",V().sayKo)}</h3><span class="d">${fmt(s.dist)}</span>
+      <div class="meta"><span class="chip ${s.indoor?"in":"out"}">${s.indoor?t.indoor:t.outdoor}</span>${SLOPE.has(s.ko)?`<span class="chip slope">${esc(V().slope)}</span>`:""}${s.gu==="jn"?`<span class="chip ext">${t.outside}</span>`:""}${s.gu==="bd"?`<span class="chip bd">${esc(u.border)}</span>`:""}${esc(s.d[S.lang])}${sayBtn(s.d[S.lang],S.lang)}</div>
+      <div class="hrs"><span class="chip ${o.cls}">${esc(o.txt)}</span>${o.line?`<span>${esc(o.line)}</span>`:""}${s.tel?`<span>☎ ${s.tel}</span>`:""}${s.src==="gu"?srcLink(s.key):`<span class="note">${esc(u.other)}</span>`}${walkLink(s.ko,s.lat,s.lng)}${skBtn({place:s.ko,placeT:nm(s),addr:s.addr||""})}${wrongBtn(s.ko)}</div>
       ${s.addr?`<div class="addr">${esc(s.addr)}</div>`:""}
       ${hyHtml(s.hy)}
       ${eff()!=="good"&&s.indoor&&i===0?`<div class="why">${esc(eff()==="rain"?t.whyRain:t.whyDust)}</div>`:""}</div>`}).join("")+srcLine+tourHtml();
@@ -1280,13 +1422,13 @@ function renderList(){
     L.innerHTML=sortedFood().map((f,i)=>`<div class="item" onclick="focusPlace('${f.ko}')">
       <span class="no" style="background:var(--food)">${i+1}</span>
       <h3>${esc(nm(f))}${S.lang==="ko"?"":`<span class="orig">${esc(f.ko)}</span>`}</h3><span class="d">${fmt(f.dist)}</span>
-      <div class="meta"><span class="chip">${esc(t.orae)}</span>${esc(f.k[S.lang])}</div><div class="hrs">${walkLink(f.ko,f.lat,f.lng)}</div></div>`).join("")+centHtml()
-      +`<p class="sec">${esc(T3[S.lang].menuT)}</p><input class="srch" id="mq" type="search" placeholder="${esc(T3[S.lang].menuPh)}" value="${esc(S.mq||"")}" oninput="S.mq=this.value;menuSearch()"><div id="mres"></div>`
+      <div class="meta"><span class="chip">${esc(t.orae)}</span>${esc(f.k[S.lang])}</div><div class="hrs">${walkLink(f.ko,f.lat,f.lng)}${skBtn({place:f.ko,placeT:nm(f)})}${wrongBtn(f.ko)}</div></div>`).join("")+centHtml()
+      +`<p class="sec">${esc(T3[S.lang].menuT)}</p><input class="srch" id="mq" type="search" placeholder="${esc(T3[S.lang].menuPh)}" value="${esc(S.mq||"")}" oninput="S.mq=this.value;menuSearch()"><div class="mfil" id="mfil"></div><div id="mres"></div>`
       +(D?`<p class="srcl">${esc(D.sources.menu)}</p>`:"");
     menuSearch();loadCent();
   }else if(S.tab===2){
     const m=new Date().getMonth()+1,dist=f=>f.m.length?Math.min(...f.m.map(x=>(x-m+12)%12)):99;
-    const card=f=>`<div class="blk"><h3>${esc(f.n[S.lang])}</h3><p class="note">${esc(f.p[S.lang])}</p>${f.hold?`<p class="note" style="color:var(--warn)">${esc(u.onHold)}</p>`:""}<div class="hrs" style="margin:0">${f.tel?`<span>☎ ${f.tel}</span>`:""}${srcLink(f.key)}</div></div>`;
+    const card=f=>`<div class="blk"><h3>${esc(f.n[S.lang])}</h3><p class="note">${esc(f.p[S.lang])}${sayBtn(f.n[S.lang]+". "+f.p[S.lang],S.lang)}</p>${f.hold?`<p class="note" style="color:var(--warn)">${esc(u.onHold)}</p>`:""}<div class="hrs" style="margin:0">${f.tel?`<span>☎ ${f.tel}</span>`:""}${srcLink(f.key)}</div></div>`;
     const now=FEST.filter(f=>f.m.includes(m)),soon=FEST.filter(f=>!f.m.includes(m)&&dist(f)<=3).sort((a,b)=>dist(a)-dist(b)),rest=FEST.filter(f=>!now.includes(f)&&!soon.includes(f)).sort((a,b)=>dist(a)-dist(b));
     L.innerHTML=holiHtml()+evHtml()+seoulHtml()+`<p class="sec">${esc(u.tabs2[1])}</p>`+(now.length?`<p class="sec">${esc(u.thisMonth)}</p>`+now.map(card).join(""):"")+(soon.length?`<p class="sec">${esc(u.next)}</p>`+soon.map(card).join(""):"")+`<p class="sec">${esc(u.later)}</p>`+rest.map(card).join("")+`<p class="note">${esc(u.exact)}</p>`+srcLine;
   }else if(S.tab===6){
@@ -1315,7 +1457,7 @@ function renderList(){
         <p class="big">${esc(showKo()?z.areas.join(", "):z.areas.map(romanDong).join(", "))}</p>
         <div class="days">${dline(u3.gen,z.general)}${dline(u3.food,z.food)}${dline(u3.rec,z.recycle)}<span>${esc(u3.putOut)}</span><span>${esc(z.start)}–${esc(z.end)}</span></div>
         <label class="note">${esc(u3.zoneL)} <select class="zone" onchange="S.zone=+this.value;renderList()">${opts}</select></label>
-        <p>${esc(u.trashRule)}</p><p>${esc(t.trashHow)}</p><p class="note">💡 ${esc(u.tip)}</p><p class="note">${esc(showKo()?(z.dept||u.trashCall):u.trashCall)} ☎ ${esc(z.tel||"02-2241-4400")}</p></div>
+        <p>${esc(u.trashRule)}${sayBtn(u.trashRule+" "+t.trashHow,S.lang)}</p><p>${esc(t.trashHow)}</p><p class="note">💡 ${esc(u.tip)}</p><p class="note">${esc(showKo()?(z.dept||u.trashCall):u.trashCall)} ☎ ${esc(z.tel||"02-2241-4400")}</p></div>
       <div class="blk"><h3>${esc(u.bags)}</h3><p>${esc(u.bagsTxt)}</p>${bagHtml()}</div>
       <div class="blk"><h3>${esc(u3.govT)}</h3>
         ${centerHtml()||`<p><b>${esc(u.centerT)}</b> · ${esc(S.lang==="ko"?dg.center.ko:dg.center.en)}${dg.center.addr?` · ${esc(dg.center.addr)}`:""} · ☎ ${dg.center.tel}</p>`}
@@ -1329,7 +1471,7 @@ function renderList(){
   }else{
     const h=T8[S.lang],tel=n=>n.replace(/[^0-9+]/g,"");
     const row=(n,[ti,de],alt)=>`<div class="call"><div><b>${esc(ti)}</b> <span class="chip">${esc(h.h24)}</span><small>${esc(de)}</small>${alt?`<small>${esc(h.alt)}: <a href="tel:${tel(alt)}">${alt}</a></small>`:""}</div><a class="big tel" href="tel:${tel(n)}">${n}</a></div>`;
-    L.innerHTML=holiHtml()+(STAYS[S.stay].info?`<div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(T6[S.lang].myAddr)}</button></div>`:"")+`<div class="blk">${row("119",h.n119)}${row("112",h.n112,"+82-2-313-0842")}${row("1330",h.n1330)}${row("120",h.n120,"+82-2-731-6800")}${row("114",h.n114)}${row("1588-5644",h.n1588)}</div>
+    L.innerHTML=`<div class="a11y-row"><button type="button" class="a11y" onclick="cycleSize()" aria-label="${esc(V().textSize)}">가 ${["","+","++"][A11Y.size]}</button><span>${esc(V().textSize)}</span><button type="button" class="a11y" onclick="toggleHc();renderList()" aria-pressed="${!!A11Y.hc}" aria-label="${esc(V().contrast)}">◐</button><span>${esc(V().contrast)}</span></div>`+holiHtml()+(STAYS[S.stay].info?`<div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(T6[S.lang].myAddr)}</button></div>`:"")+`<div class="blk">${row("119",h.n119)}${row("112",h.n112,"+82-2-313-0842")}${row("1330",h.n1330)}${row("120",h.n120,"+82-2-731-6800")}${row("114",h.n114)}${row("1588-5644",h.n1588)}</div>
       <div class="blk"><h3>${esc(ERA[S.lang].t)}</h3><p>${esc(ERA[S.lang].d)}</p><p class="note">${esc(ERA[S.lang].how)}</p>
         <p class="srcl"><a href="https://world.seoul.go.kr/service/living/disaster-evacuation-tips-citizens/emergency-ready-app/" target="_blank" rel="noopener">${esc(ERA[S.lang].src)}</a></p></div>
       <div class="blk"><h3>${esc(h.mrs[0])} <span class="chip">${esc(h.h24)}</span></h3><p>${esc(h.mrs[1])}</p><p>${esc(h.mail)}: <a href="mailto:medicalreferral@seoul.go.kr">medicalreferral@seoul.go.kr</a></p></div>
@@ -1420,11 +1562,18 @@ function menuSearch(){
   const box=document.getElementById("mres");if(!box)return;
   if(!D){box.innerHTML=`<p class="note">…</p>`;return;}
   const q=(S.mq||"").trim().toLowerCase(),u3=T3[S.lang];
-  const list=q?D.menu.filter(m=>[m.ko,m.en,m.rom,m.ja,m.zh].some(x=>x&&x.toLowerCase().includes(q))).slice(0,12)
+  const F=S.mf||(S.mf={spice:3,veg:false,pork:false,sea:false,nut:false}),v=V();
+  const ok=m=>{const g=menuTags(m);return g.spice<=F.spice&&(!F.veg||g.veg)&&(!F.pork||!g.pork)&&(!F.sea||!g.sea)&&(!F.nut||!g.nut);};
+  const fil=document.getElementById("mfil");
+  if(fil)fil.innerHTML=`<span class="t">${esc(v.fTitle)}</span><select aria-label="${esc(v.fSpice)}" onchange="S.mf.spice=+this.value;menuSearch()">${[0,1,2,3].map(n=>`<option value="${n}"${F.spice===n?" selected":""}>${esc(v.fSpice)} ${"🌶".repeat(n)||"0"}</option>`).join("")}</select>`
+    +[["veg",v.fVeg],["pork",v.fPork],["sea",v.fSea],["nut",v.fNut]].map(([k,l])=>`<button type="button" aria-pressed="${F[k]}" onclick="S.mf.${k}=!S.mf.${k};menuSearch()">${esc(l)}</button>`).join("");
+  const anyF=F.spice<3||F.veg||F.pork||F.sea||F.nut;
+  const list=(q||anyF)?D.menu.filter(m=>(!q||[m.ko,m.en,m.rom,m.ja,m.zh].some(x=>x&&x.toLowerCase().includes(q)))&&ok(m)).slice(0,12)
     :MENU_PICK.map(k=>D.menu.find(m=>m.ko===k)).filter(Boolean);
   box.innerHTML=list.length?list.map(m=>{const main=S.lang==="ko"?m.ko:(m[S.lang]||m.en);
     const alt=[m.ko,m.rom,S.lang!=="en"?m.en:"",S.lang!=="ja"?m.ja:"",S.lang!=="zh"?m.zh:""].filter(x=>x&&x!==main);
-    return `<div class="menu"><b>${esc(main)}</b> <span class="chip">${esc(m.cat)}</span><div class="alt">${alt.map(esc).join(" · ")}</div>${S.lang==="en"&&m.enDesc?`<p>${esc(m.enDesc)}</p>`:""}</div>`;}).join("")
+    const g=menuTags(m),tags=[g.spice?`🌶×${g.spice} ${v.tSpicy}`:"",g.veg?v.tVeg:"",g.pork?v.tPork:"",g.sea?v.tSea:"",g.nut?v.tNut:""].filter(Boolean);
+    return `<div class="menu"><b>${esc(main)}</b> <span class="chip">${esc(m.cat)}</span>${sayBtn(m.ko,"ko",v.sayKo)}<div class="alt">${alt.map(esc).join(" · ")}</div>${tags.length?`<div>${tags.map(x=>`<span class="mtag">${esc(x)}</span>`).join("")}</div>`:""}${S.lang==="en"&&m.enDesc?`<p>${esc(m.enDesc)}</p>`:""}<div class="hrs" style="margin-top:4px">${skBtn({menu:m.ko,menuT:main})}</div></div>`;}).join("")
     :`<p class="note">${esc(u3.menuNone)}</p>`;
 }
 // 서울문화포털 성북 행사 (오늘 이후 끝나는 것)
@@ -1502,17 +1651,404 @@ function refineCoords(){
     if(st===kakao.maps.services.Status.OK&&r[0]){o.lat=+r[0].y;o.lng=+r[0].x;o.live=true;}res();},{location:center,radius:5000}));
   return Promise.all([...SPOTS,...FOOD].map(one));
 }
+// =====================================================================
+// 세이프패스 기능 묶음 (팀 프롬프트 P0 ~ P2) — 문자열은 T12 에 4개 언어
+// =====================================================================
+const T12={
+ en:{sos:"SOS",sosT:"Emergency help",close:"Close",call:"Call",
+  c112:"Police — crime, theft, a fight, someone following you",c119:"Fire · ambulance — injury, sudden illness, fire (free; interpreters)",
+  c1330:"Korea Travel Helpline — interpretation, travel complaints, tourist police (24h)",c120:"Seoul Dasan Call Center — questions about living in Seoul, in foreign languages",
+  addrT:"My address in Korean",copy:"Copy",copied:"Copied",showKo:"Show in Korean",noStay:"No stay selected. Use “My location” on the map, or show the place name to someone nearby.",
+  nearT:"Nearest help",er:"Emergency room",pharm:"Pharmacy",aed:"AED (defibrillator)",shelter:"Shelter",
+  openNow:"Open now",closedNow:"Closed now",hoursUnk:"Hours not checked — call first",
+  aedNone:"AED locations will appear once the public data is connected. Most subway stations and public offices have one — ask staff “AED?”",
+  shelterNone:"Shelter locations will appear once the public data is connected. In a disaster, the Emergency Ready App shows the nearest shelter.",
+  loading:"Looking for the nearest places…",failed:"Couldn't load right now — the phone numbers above still work.",
+  from:"from",fromMe:"from your location",fromStay:"from your stay",
+  sitT:"What to do",
+  sit:[["When you are sick","Mild: go to a pharmacy (약국). Serious or sudden: call 119 — the ambulance is free.","Call 1330 if you need an interpreter at a clinic."],
+       ["When you are lost","Open “My address in Korean” and show it to a taxi driver or shop staff.","Or call 1330 for interpretation."],
+       ["When you lose something","Go to the nearest police box (지구대·파출소) or call 112.","On a subway or bus: call 120 for the lost & found center."],
+       ["Earthquake · fire · disaster","Fire: leave the building, then call 119. Earthquake: protect your head, then move to an open space.","Follow the alerts in the Emergency Ready App."]],
+  eraT:"Emergency Ready App (Ministry of the Interior and Safety)",eraD:"Free disaster alerts and shelter maps in 22 languages.",android:"Android",ios:"iPhone",
+  route:"Directions",routeT:"Open walking directions in",kakaoM:"Kakao Map",naverM:"Naver Map",googleM:"Google Maps",
+  wk:"≈{m} min walk",
+  layers:["Sights","Toilets","Wi-Fi","Safety","Food"],
+  skT:"Show this to a Korean",skNote:"The main sentence is always in Korean.",skPick:"Choose a sentence",skSym:"Symptom",skIng:"Ingredient",
+  listen:"Listen",stop:"Stop",sayKo:"Hear it in Korean",noVoice:"This device has no voice for this language.",
+  todayT:"Good to know today",dismiss:"Hide for today",
+  bTrash:"Today is garbage day here: put it out {s}–{e}.",bTrashBag:"Bags: {shop}.",bRain:"Rain from about {h}:00 — take an umbrella.",bRainGo:"Indoor places",
+  bDust:"Fine dust is bad — wear a mask; indoor places are listed first.",bEv:"{n} Seongbuk event(s) today or tomorrow.",bEvGo:"See events",
+  bNight:"It's late. 24-hour convenience stores and the SOS button are here for you.",bNightGo:"Nearby stores",
+  onb:["Choose your language","Your stay","Garbage rules here","If something goes wrong","Today's pick"],
+  onbNext:"Next",onbSkip:"Skip",onbDone:"Start",onbSos:"The red SOS button is always at the bottom right.",onbHome:"Tip: open the browser menu and choose “Add to Home Screen”.",
+  onbTrash:"Days: {d} · {s}–{e} · in front of your building",onbTrash2:"General waste: volume-rate bag · recyclables: clear bag · food waste: food-waste bag",
+  courseT:"Today's half-day course",courseRain:"Indoor version (rain / fine dust)",courseSun:"Outdoor version",courseMap:"Show on map",courseTotal:"Total ≈{m} min walking",courseFood:"Snack stop",
+  fTitle:"Filter (estimated from the dish name — please ask staff to be sure)",fSpice:"Max spice",fVeg:"Vegetarian",fPork:"No pork",fSea:"No seafood",fNut:"No nuts",
+  tSpicy:"spicy",tVeg:"vegetarian?",tPork:"pork",tSea:"seafood",tNut:"nuts",
+  wrong:"Wrong info?",wrongT:"What's wrong?",wrongR:["Closed / moved","Wrong hours","Wrong location","Other"],wrongSend:"Send",thanks:"Thank you! (saved on this device only)",
+  textSize:"Text size",contrast:"High contrast",slope:"Uphill · many stairs",offline:"You're offline — saved information is shown.",sample:"sample"},
+ zh:{sos:"SOS",sosT:"紧急求助",close:"关闭",call:"拨打",
+  c112:"警察 — 犯罪、被盗、打架、被跟踪",c119:"火警 · 急救 — 受伤、突发疾病、火灾（免费，有口译）",
+  c1330:"旅游咨询热线 — 口译、旅游投诉、旅游警察（24小时）",c120:"首尔茶山呼叫中心 — 用外语咨询首尔生活问题",
+  addrT:"我的地址（韩文）",copy:"复制",copied:"已复制",showKo:"用韩文出示",noStay:"未选择住宿。请用地图上的“我的位置”，或把地点名称给附近的人看。",
+  nearT:"最近的求助地点",er:"急诊室",pharm:"药店",aed:"AED（除颤器）",shelter:"避难所",
+  openNow:"营业中",closedNow:"已关门",hoursUnk:"未确认营业时间，请先打电话",
+  aedNone:"接入公共数据后会显示AED位置。多数地铁站和公共机关都有，可以问工作人员“AED?”",
+  shelterNone:"接入公共数据后会显示避难所位置。发生灾害时，Emergency Ready App 会显示最近的避难所。",
+  loading:"正在查找最近的地点…",failed:"暂时无法加载，上面的电话号码仍可使用。",
+  from:"距",fromMe:"距您的位置",fromStay:"距住宿",
+  sitT:"遇到情况怎么办",
+  sit:[["生病时","症状轻：去药店（약국）。严重或突发：拨打119，救护车免费。","在诊所需要翻译时拨打1330。"],
+       ["迷路时","打开“我的地址（韩文）”给出租车司机或店员看。","或拨打1330请求口译。"],
+       ["丢失物品时","去最近的派出所（지구대·파출소）或拨打112。","在地铁或公交上丢失：拨打120询问失物招领中心。"],
+       ["地震 · 火灾 · 灾害","火灾：先离开建筑再拨打119。地震：先保护头部，再到空旷的地方。","按照 Emergency Ready App 的提示行动。"]],
+  eraT:"Emergency Ready App（行政安全部）",eraD:"22种语言的免费灾害警报和避难所地图。",android:"安卓",ios:"iPhone",
+  route:"路线",routeT:"用以下地图查看步行路线",kakaoM:"Kakao Map",naverM:"Naver 地图",googleM:"Google 地图",
+  wk:"步行约{m}分",
+  layers:["景点","洗手间","Wi-Fi","安全","美食"],
+  skT:"给韩国人看",skNote:"主句始终用韩文显示。",skPick:"选择句子",skSym:"症状",skIng:"食材",
+  listen:"朗读",stop:"停止",sayKo:"听韩语发音",noVoice:"此设备没有该语言的语音。",
+  todayT:"今天须知",dismiss:"今天不再显示",
+  bTrash:"今天是本区垃圾投放日：{s}–{e} 放出。",bTrashBag:"垃圾袋：{shop}。",bRain:"约{h}点起有雨，请带伞。",bRainGo:"室内景点",
+  bDust:"细颗粒物较差，请戴口罩；优先显示室内景点。",bEv:"今天或明天有{n}个城北活动。",bEvGo:"查看活动",
+  bNight:"夜深了。附近有24小时便利店，SOS按钮随时可用。",bNightGo:"附近便利店",
+  onb:["选择语言","您的住宿","本区垃圾规则","遇到问题时","今日推荐"],
+  onbNext:"下一步",onbSkip:"跳过",onbDone:"开始",onbSos:"红色SOS按钮一直在右下角。",onbHome:"提示：打开浏览器菜单，选择“添加到主屏幕”。",
+  onbTrash:"投放日：{d} · {s}–{e} · 放在建筑门前",onbTrash2:"一般垃圾：计量垃圾袋 · 可回收物：透明袋 · 厨余：厨余专用袋",
+  courseT:"今日半日路线",courseRain:"室内版（下雨 / 细颗粒物）",courseSun:"户外版",courseMap:"在地图上查看",courseTotal:"步行共约{m}分钟",courseFood:"小吃站",
+  fTitle:"筛选（根据菜名推测，请向店员确认）",fSpice:"最高辣度",fVeg:"素食",fPork:"不含猪肉",fSea:"不含海鲜",fNut:"不含坚果",
+  tSpicy:"辣",tVeg:"素食?",tPork:"猪肉",tSea:"海鲜",tNut:"坚果",
+  wrong:"信息有误？",wrongT:"哪里有误？",wrongR:["已关闭 / 已搬迁","时间不对","位置不对","其他"],wrongSend:"提交",thanks:"谢谢！（仅保存在本设备）",
+  textSize:"字号",contrast:"高对比度",slope:"上坡 · 台阶多",offline:"当前离线，显示已保存的信息。",sample:"示例"},
+ ja:{sos:"SOS",sosT:"緊急ヘルプ",close:"閉じる",call:"電話",
+  c112:"警察 — 犯罪、盗難、けんか、つきまとい",c119:"消防・救急 — けが、急病、火事（無料・通訳あり）",
+  c1330:"観光通訳案内 — 通訳、旅行の苦情、観光警察（24時間）",c120:"ソウル茶山コールセンター — ソウル生活の相談を外国語で",
+  addrT:"宿泊先の住所（韓国語）",copy:"コピー",copied:"コピーしました",showKo:"韓国語で見せる",noStay:"宿泊先が選ばれていません。地図の「現在地」を使うか、近くの人に場所の名前を見せてください。",
+  nearT:"いちばん近い助け",er:"救急室",pharm:"薬局",aed:"AED（除細動器）",shelter:"避難所",
+  openNow:"営業中",closedNow:"営業時間外",hoursUnk:"営業時間未確認 — 先に電話を",
+  aedNone:"公共データにつながるとAEDの場所が表示されます。多くの地下鉄駅や役所にあります。職員に「AED?」と聞いてください。",
+  shelterNone:"公共データにつながると避難所が表示されます。災害時は Emergency Ready App で最寄りの避難所がわかります。",
+  loading:"近くの場所を探しています…",failed:"今は読み込めません。上の電話番号は使えます。",
+  from:"から",fromMe:"現在地から",fromStay:"宿泊先から",
+  sitT:"こんなときは",
+  sit:[["具合が悪いとき","軽いとき：薬局（약국）へ。重い・急なとき：119へ（救急車は無料）。","病院で通訳が必要なら1330へ。"],
+       ["道に迷ったとき","「宿泊先の住所（韓国語）」を開いてタクシー運転手や店員に見せます。","または1330で通訳を頼みます。"],
+       ["物をなくしたとき","近くの交番（지구대・파출소）へ行くか112へ。","地下鉄・バスで落としたら120で遺失物センターを案内してもらえます。"],
+       ["地震・火事・災害","火事：建物の外に出てから119へ。地震：頭を守り、揺れが収まったら広い場所へ。","Emergency Ready App の案内に従います。"]],
+  eraT:"Emergency Ready App（行政安全部）",eraD:"22言語で災害アラートと避難所マップを無料で。",android:"Android",ios:"iPhone",
+  route:"道案内",routeT:"徒歩ルートを開くアプリ",kakaoM:"Kakao Map",naverM:"NAVER マップ",googleM:"Google マップ",
+  wk:"徒歩約{m}分",
+  layers:["観光","トイレ","Wi-Fi","安全","グルメ"],
+  skT:"韓国の人に見せる",skNote:"メインの文はいつも韓国語です。",skPick:"文を選ぶ",skSym:"症状",skIng:"食材",
+  listen:"読み上げ",stop:"停止",sayKo:"韓国語の発音を聞く",noVoice:"この端末にはこの言語の音声がありません。",
+  todayT:"今日知っておきたいこと",dismiss:"今日は表示しない",
+  bTrash:"今日はこの地域のゴミの日：{s}–{e} に出します。",bTrashBag:"袋：{shop}。",bRain:"{h}時ごろから雨。傘を持っていきましょう。",bRainGo:"屋内スポット",
+  bDust:"PMが悪い日です。マスクを。屋内スポットを先に表示します。",bEv:"今日・明日の城北イベントが{n}件あります。",bEvGo:"イベントを見る",
+  bNight:"夜遅い時間です。近くの24時間コンビニとSOSボタンを確認しておきましょう。",bNightGo:"近くのコンビニ",
+  onb:["言語を選ぶ","宿泊先","この地域のゴミのルール","困ったときは","今日のおすすめ"],
+  onbNext:"次へ",onbSkip:"スキップ",onbDone:"はじめる",onbSos:"赤いSOSボタンはいつも右下にあります。",onbHome:"ヒント：ブラウザのメニューから「ホーム画面に追加」を選べます。",
+  onbTrash:"曜日：{d} · {s}–{e} · 建物の前に",onbTrash2:"一般ゴミ：指定袋 · 資源ゴミ：透明な袋 · 生ゴミ：生ゴミ用の袋",
+  courseT:"今日の半日コース",courseRain:"屋内版（雨・PM）",courseSun:"屋外版",courseMap:"地図で見る",courseTotal:"徒歩合計 約{m}分",courseFood:"ひと休み",
+  fTitle:"絞り込み（料理名からの推定です。お店の人に確認してください）",fSpice:"辛さの上限",fVeg:"ベジタリアン",fPork:"豚肉なし",fSea:"魚介なし",fNut:"ナッツなし",
+  tSpicy:"辛い",tVeg:"ベジ?",tPork:"豚肉",tSea:"魚介",tNut:"ナッツ",
+  wrong:"情報がちがう？",wrongT:"どこがちがいますか？",wrongR:["閉店・移転","時間がちがう","場所がちがう","その他"],wrongSend:"送る",thanks:"ありがとうございます！（この端末にだけ保存）",
+  textSize:"文字サイズ",contrast:"ハイコントラスト",slope:"上り坂・階段が多い",offline:"オフラインです。保存した情報を表示しています。",sample:"サンプル"},
+ ko:{sos:"SOS",sosT:"긴급 도움",close:"닫기",call:"전화",
+  c112:"경찰 — 범죄, 도난, 싸움, 누가 따라올 때",c119:"화재 · 구급 — 다쳤을 때, 갑자기 아플 때, 불 (무료, 통역 가능)",
+  c1330:"관광통역안내 — 통역, 관광 불편 신고, 관광경찰 연결 (24시간)",c120:"120 다산콜센터 — 서울 생활 문의를 외국어로",
+  addrT:"내 숙소 주소 (한국어)",copy:"복사",copied:"복사됨",showKo:"한국어로 보여 주기",noStay:"숙소가 선택되지 않았어요. 지도의 「내 위치」를 쓰거나, 장소 이름을 주변 사람에게 보여 주세요.",
+  nearT:"가장 가까운 도움",er:"응급실",pharm:"약국",aed:"자동심장충격기(AED)",shelter:"대피소",
+  openNow:"지금 영업 중",closedNow:"지금 영업 안 함",hoursUnk:"영업시간 미확인 — 먼저 전화",
+  aedNone:"공공데이터가 연결되면 AED 위치가 나와요. 지하철역 · 관공서에 많이 있으니 직원에게 「AED」라고 물어보세요.",
+  shelterNone:"공공데이터가 연결되면 대피소 위치가 나와요. 재난 때는 안전디딤돌(Emergency Ready App)이 가장 가까운 대피소를 알려 줘요.",
+  loading:"가까운 곳을 찾는 중…",failed:"지금은 불러오지 못했어요. 위의 전화번호는 그대로 쓸 수 있어요.",
+  from:"에서",fromMe:"내 위치에서",fromStay:"숙소에서",
+  sitT:"상황별 행동 요령",
+  sit:[["아플 때","가벼우면 약국으로. 심하거나 갑자기 아프면 119 (구급차 무료).","병원에서 통역이 필요하면 1330."],
+       ["길을 잃었을 때","「내 숙소 주소 (한국어)」를 열어 택시 기사나 가게 직원에게 보여 주세요.","또는 1330으로 통역을 받아요."],
+       ["물건을 잃어버렸을 때","가까운 지구대 · 파출소로 가거나 112.","지하철 · 버스에서 잃어버렸으면 120에서 유실물센터를 안내받아요."],
+       ["지진 · 화재 등 재난","불: 건물 밖으로 나간 뒤 119. 지진: 머리를 보호하고, 흔들림이 멈추면 넓은 곳으로.","안전디딤돌 앱 안내를 따라요."]],
+  eraT:"안전디딤돌 (Emergency Ready App · 행정안전부)",eraD:"22개 언어 재난 알림 · 대피소 지도, 무료.",android:"안드로이드",ios:"아이폰",
+  route:"길찾기",routeT:"걸어가는 길을 열 지도",kakaoM:"카카오맵",naverM:"네이버 지도",googleM:"구글 지도",
+  wk:"걸어서 약 {m}분",
+  layers:["관광","화장실","와이파이","안전","음식"],
+  skT:"한국인에게 보여 주기",skNote:"큰 문장은 항상 한국어로 보여 줘요.",skPick:"문장 고르기",skSym:"증상",skIng:"재료",
+  listen:"읽어 주기",stop:"멈추기",sayKo:"한국어 발음 듣기",noVoice:"이 기기에는 이 언어 음성이 없어요.",
+  todayT:"오늘 꼭 알아야 할 것",dismiss:"오늘 그만 보기",
+  bTrash:"오늘은 이 동네 쓰레기 내놓는 날: {s}~{e}.",bTrashBag:"봉투: {shop}.",bRain:"{h}시쯤부터 비 소식, 우산 챙기세요.",bRainGo:"실내 관광지",
+  bDust:"미세먼지 나쁨 — 마스크를 쓰세요. 실내 관광지를 먼저 보여 줘요.",bEv:"오늘 · 내일 성북 행사 {n}개.",bEvGo:"행사 보기",
+  bNight:"늦은 시간이에요. 가까운 24시간 편의점과 SOS 버튼을 확인하세요.",bNightGo:"가까운 편의점",
+  onb:["언어 고르기","내 숙소","이 동네 쓰레기 규칙","문제가 생기면","오늘의 추천"],
+  onbNext:"다음",onbSkip:"건너뛰기",onbDone:"시작하기",onbSos:"빨간 SOS 버튼은 언제나 오른쪽 아래에 있어요.",onbHome:"팁: 브라우저 메뉴에서 「홈 화면에 추가」를 누르면 앱처럼 쓸 수 있어요.",
+  onbTrash:"요일: {d} · {s}~{e} · 건물 앞에",onbTrash2:"일반 쓰레기: 종량제 봉투 · 재활용: 투명 봉투 · 음식물: 음식물 봉투",
+  courseT:"오늘의 반나절 코스",courseRain:"실내 버전 (비 · 미세먼지)",courseSun:"야외 버전",courseMap:"지도에서 보기",courseTotal:"총 걸어서 약 {m}분",courseFood:"쉬어 가기",
+  fTitle:"거르기 (메뉴 이름으로 추정 — 꼭 가게에 확인하세요)",fSpice:"맵기 최대",fVeg:"채식",fPork:"돼지고기 없음",fSea:"해산물 없음",fNut:"견과류 없음",
+  tSpicy:"매움",tVeg:"채식?",tPork:"돼지고기",tSea:"해산물",tNut:"견과류",
+  wrong:"정보가 틀렸어요",wrongT:"무엇이 틀렸나요?",wrongR:["문을 닫음 / 옮김","시간이 다름","위치가 다름","기타"],wrongSend:"보내기",thanks:"고마워요! (이 기기에만 저장돼요)",
+  textSize:"글자 크기",contrast:"고대비",slope:"오르막 · 계단 많음",offline:"인터넷이 끊겼어요. 저장된 정보를 보여 줘요.",sample:"샘플"}
+};
+const V=()=>T12[S.lang];
+// 도보 시간 계산 상수 (여기만 바꾸면 전체에 적용) — 카카오맵 도보 결과에 맞춘 값
+const WALK={detour:1.5,mpm:80};
+const SLOPE=new Set(["숙정문","한양도성 (성북동 구간)","북정마을","말바위안내소","낙산공원","낙산정","심우장"]);   // 오르막 · 계단이 많은 곳
+
+// ---------- 공통 ----------
+let ME=null;   // 「내 위치」를 누르면 이 화면 안에서만 씀 (저장 · 전송 안 함)
+const ORIGIN=()=>ME?{...ME,me:true}:STAYS[S.stay];
+const wkTxt=d=>V().wk.replace("{m}",walkMin(d));
+function toast(t){let el=document.getElementById("toast");if(!el){el=document.createElement("div");el.id="toast";el.className="toast";el.setAttribute("role","status");document.body.appendChild(el);}
+  el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3000);}
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+// 지금 시각: 시연판 「시간대 시나리오」가 있으면 그 값 (KST)
+function nowK(){const d=new Date(Date.now()+9*3600e3);let h=d.getUTCHours(),m=d.getUTCMinutes(),wd=d.getUTCDay();
+  if(S.fakeH!=null){h=S.fakeH;m=0;}if(S.dayShift)wd=(wd+S.dayShift)%7;return {h,m,wd,date:todayStr()};}
+
+// ---------- 길찾기: 카카오맵 · 네이버 지도 · 구글 지도 ----------
+function routeUrls(name,lat,lng){
+  const o=ORIGIN(),on=o.me?(S.lang==="ko"?"내 위치":"My location"):(o.info?o.name.ko:"성북구청"),e=encodeURIComponent;
+  return {
+    // 카카오맵 공식 링크: /link/by/walk/출발,위도,경도/도착,위도,경도
+    kakao:`https://map.kakao.com/link/by/walk/${e(on)},${o.lat},${o.lng}/${e(name)},${lat},${lng}`,
+    // 네이버 지도 앱 URL 스킴 (앱이 없으면 아래 웹 검색으로)
+    naverApp:`nmap://route/walk?slat=${o.lat}&slng=${o.lng}&sname=${e(on)}&dlat=${lat}&dlng=${lng}&dname=${e(name)}&appname=${e(location.hostname||"safepass")}`,
+    naverWeb:`https://map.naver.com/p/search/${e(name)}`,
+    // 구글 지도 공식 Maps URLs: dir/?api=1
+    google:`https://www.google.com/maps/dir/?api=1&origin=${o.lat},${o.lng}&destination=${lat},${lng}&travelmode=walking`};
+}
+let RT=null;
+function routeChooser(name,lat,lng){RT={name,lat,lng};const v=V(),u=routeUrls(name,lat,lng),el=document.getElementById("rsheet");
+  el.innerHTML=`<div class="rs-box" role="dialog" aria-label="${esc(v.routeT)}"><p class="rs-t">${esc(v.routeT)}<small>${esc(name)}</small></p>
+    <a class="rs-b" href="${u.kakao}" target="_blank" rel="noopener">${esc(v.kakaoM)}</a>
+    <button type="button" class="rs-b" onclick="openNaver()">${esc(v.naverM)}</button>
+    <a class="rs-b" href="${u.google}" target="_blank" rel="noopener">${esc(v.googleM)}</a>
+    <button type="button" class="rs-x" onclick="document.getElementById('rsheet').hidden=true">${esc(v.close)}</button></div>`;
+  el.hidden=false;}
+function openNaver(){const u=routeUrls(RT.name,RT.lat,RT.lng);
+  if(/Android|iPhone|iPad/i.test(navigator.userAgent)){const t=Date.now();location.href=u.naverApp;
+    setTimeout(()=>{if(Date.now()-t<2200&&!document.hidden)window.open(u.naverWeb,"_blank","noopener");},1200);}
+  else window.open(u.naverWeb,"_blank","noopener");}
+const routeBtn=(name,lat,lng)=>`<button type="button" class="walk rbtn" onclick="event.stopPropagation();routeChooser('${esc(String(name)).replace(/'/g,"")}',${lat},${lng})">${esc(V().route)} ▾</button>`;
+
+// ---------- 한국인에게 보여 주기 ----------
+let SK={ctx:{},id:"taxi",fill:{}},wakeLock=null;
+function showKorean(ctx,id){SK={ctx:ctx||{},id:id||(ctx&&ctx.addr?"taxi":ctx&&ctx.menu?"order":ctx&&ctx.place?"way":"help"),fill:{sym:0,ing:0}};renderSK();
+  document.getElementById("skr").hidden=false;
+  try{if("wakeLock" in navigator)navigator.wakeLock.request("screen").then(l=>wakeLock=l).catch(()=>{});}catch(e){}}
+function closeSK(){document.getElementById("skr").hidden=true;try{if(wakeLock){wakeLock.release();wakeLock=null;}}catch(e){}}
+function skFill(p,lang){const fl=D&&D.phraseFill||{},c=SK.ctx,sym=(fl.sym||[])[SK.fill.sym]||{},ing=(fl.ing||[])[SK.fill.ing]||{};
+  const val={addr:c.addr||"",place:c.place||"",menu:c.menu||"",sym:sym[lang]||"",ing:ing[lang]||""};
+  if(lang!=="ko"){val.place=c.placeT||c.place||"";val.menu=c.menuT||c.menu||"";}
+  return p[lang].replace(/\{(\w+)\}/g,(_,k)=>val[k]||"…");}
+function renderSK(){const v=V(),list=((D&&D.phrases)||[]).filter(p=>!(p.need||[]).some(k=>(k==="addr"&&!SK.ctx.addr)||(k==="place"&&!SK.ctx.place)||(k==="menu"&&!SK.ctx.menu)));
+  const p=list.find(x=>x.id===SK.id)||list[0];if(!p)return;const fl=D.phraseFill||{};
+  const chips=k=>(fl[k]||[]).map((x,i)=>`<button type="button" class="${SK.fill[k]===i?"on":""}" onclick="SK.fill.${k}=${i};renderSK()">${esc(x[S.lang])}</button>`).join("");
+  document.getElementById("skr").innerHTML=`<div class="sk-top"><span>${esc(v.skT)}</span><button type="button" class="sk-x" onclick="closeSK()" aria-label="${esc(v.close)}">×</button></div>
+    <div class="sk-main"><p class="sk-ko" lang="ko">${esc(skFill(p,"ko"))}</p>${S.lang==="ko"?"":`<p class="sk-tr">${esc(skFill(p,S.lang))}</p>`}
+      <button type="button" class="sk-say" onclick="speak(${esc(JSON.stringify(skFill(p,"ko")))},'ko')" aria-label="${esc(v.sayKo)}">🔊 ${esc(v.sayKo)}</button></div>
+    ${(p.need||[]).includes("sym")?`<div class="sk-fill"><b>${esc(v.skSym)}</b>${chips("sym")}</div>`:""}${(p.need||[]).includes("ing")?`<div class="sk-fill"><b>${esc(v.skIng)}</b>${chips("ing")}</div>`:""}
+    <div class="sk-pick"><b>${esc(v.skPick)}</b>${list.map(x=>`<button type="button" class="${x===p?"on":""}" onclick="SK.id='${x.id}';renderSK()">${esc(skFill(x,S.lang==="ko"?"ko":S.lang))}</button>`).join("")}</div>
+    <p class="sk-note">${esc(v.skNote)}</p>`;}
+const skBtn=ctx=>`<button type="button" class="walk skbtn" onclick="event.stopPropagation();showKorean(${esc(JSON.stringify(ctx))})">${esc(V().showKo)}</button>`;
+
+// ---------- 음성 안내 (Web Speech API) ----------
+const VLANG={en:"en-US",zh:"zh-CN",ja:"ja-JP",ko:"ko-KR"};
+let VOICES=[];function loadVoices(){try{VOICES=speechSynthesis.getVoices()||[];}catch(e){VOICES=[];}}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+const hasVoice=l=>"speechSynthesis" in window&&(VOICES.length===0||VOICES.some(v=>v.lang&&v.lang.replace("_","-").toLowerCase().startsWith(VLANG[l].slice(0,2).toLowerCase())));
+function speak(text,l,btn){
+  if(!("speechSynthesis" in window)||!hasVoice(l)){toast(V().noVoice);return;}
+  if(speechSynthesis.speaking){speechSynthesis.cancel();if(btn&&btn.classList.contains("on")){btn.classList.remove("on");return;}}
+  document.querySelectorAll(".say.on").forEach(b=>b.classList.remove("on"));
+  const u=new SpeechSynthesisUtterance(text);u.lang=VLANG[l];const vv=VOICES.find(v=>v.lang&&v.lang.replace("_","-").toLowerCase().startsWith(VLANG[l].slice(0,2).toLowerCase()));if(vv)u.voice=vv;
+  u.rate=l==="ko"?.9:1;if(btn){btn.classList.add("on");u.onend=u.onerror=()=>btn.classList.remove("on");}speechSynthesis.speak(u);}
+const sayBtn=(text,l,label)=>{const ok=hasVoice(l),lab=label||V().listen;return `<button type="button" class="say" ${ok?"":"disabled"} title="${esc(ok?lab:V().noVoice)}" aria-label="${esc(lab)}" onclick="event.stopPropagation();speak(${esc(JSON.stringify(text))},'${l}',this)">🔊</button>`;};
+
+// ---------- SOS ----------
+const SAFE={};   // 서버(/api/safety) · 카카오 장소검색 결과
+function openSOS(){document.getElementById("sos").hidden=false;document.body.classList.add("noscroll");renderSOS();loadSafety();}
+function closeSOS(){document.getElementById("sos").hidden=true;document.body.classList.remove("noscroll");}
+function loadSafety(){
+  const o=ORIGIN(),key=`${S.stay}:${o.me?1:0}`;if(SAFE.key===key&&SAFE.done)return;SAFE.key=key;SAFE.done=false;
+  ["er","pharm","aed","shelter"].forEach(k=>SAFE[k]={loading:true});renderSOS();
+  const to=p=>Promise.race([p,new Promise(r=>setTimeout(()=>r({ok:false,reason:"timeout"}),5000))]);   // 5초 넘으면 대체
+  const kakao=(fn)=>new Promise(res=>{if(!ps)return res(null);fn(res);});
+  const near=(rows)=>rows.filter(r=>r.lat).map(r=>({...r,d:km(o,r)})).sort((a,b)=>a.d-b.d).slice(0,3);
+  // 응급실: 공공데이터 → 없으면 카카오 「응급실」
+  to(apiGet("/api/safety?set=er")).then(j=>j&&j.ok&&j.rows.length?{rows:near(j.rows),src:j.src}:
+    kakao(res=>ps.keywordSearch("응급실",(r,st)=>res(st==="OK"?{rows:near(r.filter(p=>/응급/.test(p.category_name)).map(p=>({name:p.place_name,addr:p.road_address_name||p.address_name,tel:p.phone,lat:+p.y,lng:+p.x}))),src:"Kakao Map"}:null),
+      {location:new kakao.maps.LatLng(o.lat,o.lng),radius:5000,sort:kakao.maps.services.SortBy.DISTANCE})))
+    .then(r=>{SAFE.er=r||{fail:true};renderSOS();});
+  // 약국: 공공데이터(영업시간) → 없으면 카카오 약국(시간 미확인)
+  to(apiGet("/api/safety?set=pharm")).then(j=>j&&j.ok&&j.rows.length?{rows:near(j.rows),src:j.src,hours:true}:
+    kakao(res=>ps.categorySearch("PM9",(r,st)=>res(st==="OK"?{rows:near(r.map(p=>({name:p.place_name,addr:p.road_address_name||p.address_name,tel:p.phone,lat:+p.y,lng:+p.x}))),src:"Kakao Map"}:null),
+      {location:new kakao.maps.LatLng(o.lat,o.lng),radius:1500,sort:kakao.maps.services.SortBy.DISTANCE})))
+    .then(r=>{SAFE.pharm=r||{fail:true};renderSOS();});
+  to(apiGet("/api/safety?set=aed")).then(j=>{SAFE.aed=j&&j.ok&&j.rows.length?{rows:near(j.rows),src:j.src}:{none:true};renderSOS();});
+  to(apiGet("/api/safety?set=shelter")).then(j=>{SAFE.shelter=j&&j.ok&&j.rows.some(r=>r.lat)?{rows:near(j.rows),src:j.src}:{none:true};SAFE.done=true;renderSOS();});
+}
+function openState2(h){   // 공공데이터 약국 영업시간 → 지금 영업 중?
+  if(!h)return null;const n=nowK(),day=String(n.wd===0?7:n.wd),t=n.h*100+n.m,r=h[day];if(!r||!r[0])return false;
+  const s=+r[0],e=+r[1];return e>s?t>=s&&t<e:(t>=s||t<e);}
+function renderSOS(){
+  const el=document.getElementById("sos");if(!el||el.hidden)return;const v=V(),st=STAYS[S.stay],o=ORIGIN();
+  const call=(n,t)=>`<a class="sos-call" href="tel:${n}"><b>${n}</b><span>${esc(t)}</span></a>`;
+  const item=(k,r,hours)=>{const op=hours?openState2(r.hours):null;
+    return `<div class="sos-it"><div><b>${showKo()?esc(r.name):withRoman(r.name)}</b><small>${esc(r.addr||"")}</small>
+      <small>${fmtD(r.d)} ${esc(o.me?v.fromMe:v.fromStay)}${k==="pharm"?` · <span class="${op===true?"ok":op===false?"no":""}">${esc(op===true?v.openNow:op===false?v.closedNow:v.hoursUnk)}</span>`:""}</small></div>
+      <div class="sos-act">${r.tel?`<a class="sos-mini" href="tel:${r.tel.replace(/[^0-9]/g,"")}">${esc(v.call)}</a>`:""}${r.lat?`<button type="button" class="sos-mini" onclick="routeChooser('${esc(r.name).replace(/'/g,"")}',${r.lat},${r.lng})">${esc(v.route)}</button>`:""}</div></div>`;};
+  const sec=k=>{const x=SAFE[k]||{};let b;
+    if(x.loading)b=`<p class="note">${esc(v.loading)}</p>`;
+    else if(x.none)b=`<p class="note">${esc(k==="aed"?v.aedNone:v.shelterNone)}</p>`;
+    else if(x.fail||!x.rows||!x.rows.length)b=`<p class="note">${esc(v.failed)}</p>`;
+    else b=x.rows.map(r=>item(k,r,x.hours)).join("")+`<p class="srcl">${esc(x.src)}</p>`;
+    return `<div class="sos-sec"><h4>${esc(v[k])}</h4>${b}</div>`;};
+  const addr=st.info?st.info.addrKo:"";
+  el.innerHTML=`<div class="sos-head"><b>🆘 ${esc(v.sosT)}</b><button type="button" class="sos-x" onclick="closeSOS()" aria-label="${esc(v.close)}">×</button></div>
+   <div class="sos-body">
+    <div class="sos-calls">${call("112",v.c112)}${call("119",v.c119)}${call("1330",v.c1330)}${call("120",v.c120)}</div>
+    <div class="sos-addr"><h4>${esc(v.addrT)}</h4>${addr?`<p class="sos-big" lang="ko">${esc(addr)}</p><p class="note">${esc(st.name.ko)}</p>
+      <div class="sos-act"><button type="button" class="sos-mini" onclick="copyText(this,${esc(JSON.stringify(addr))})">${esc(v.copy)}</button><button type="button" class="sos-mini" onclick="showKorean({addr:${esc(JSON.stringify(addr))}},'taxi')">${esc(v.showKo)}</button><button type="button" class="sos-mini" onclick="showKorean({},'help')">🆘 ${esc(v.showKo)}</button></div>`
+      :`<p class="note">${esc(v.noStay)}</p><div class="sos-act"><button type="button" class="sos-mini" onclick="showKorean({},'help')">🆘 ${esc(v.showKo)}</button></div>`}</div>
+    <h3 class="sos-h3">${esc(v.nearT)} <small>${esc(o.me?v.fromMe:v.fromStay)}</small></h3>
+    ${sec("er")}${sec("pharm")}${sec("aed")}${sec("shelter")}
+    <h3 class="sos-h3">${esc(v.sitT)}</h3>
+    ${v.sit.map(([t,...l])=>`<details class="sos-sit"><summary>${esc(t)}</summary>${l.map(x=>`<p>${esc(x)}</p>`).join("")}</details>`).join("")}
+    <div class="sos-era"><h4>${esc(v.eraT)}</h4><p>${esc(v.eraD)}</p><div class="sos-act">
+      <a class="sos-mini" href="https://play.google.com/store/search?q=Emergency%20Ready%20App&c=apps" target="_blank" rel="noopener">${esc(v.android)}</a>
+      <a class="sos-mini" href="https://apps.apple.com/kr/developer/id431558537" target="_blank" rel="noopener">${esc(v.ios)}</a></div>
+      <p class="srcl">${esc(ERA[S.lang].src)}</p></div>
+   </div>`;
+}
+function fmtD(d){return d==null?"":`${d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km"}${d<=3?" · "+esc(wkTxt(d)):""}`;}
+
+// ---------- 지도 카테고리 칩 (관광 · 화장실 · 와이파이 · 안전 · 음식) ----------
+let LAYERS=new Set(lsGet("sp_layers",[])),layerObjs=[],LITEMS=[];
+const LCOLOR={sight:"#2F6B5C",toilet:"#2B6CB0",wifi:"#6B4FA0",safe:"#B8402F",food:"#9A6200"};
+const LICON={sight:"관",toilet:"WC",wifi:"W",safe:"!",food:"食"};
+function renderChips(){const el=document.getElementById("mapchips");if(!el)return;const v=V();
+  el.innerHTML=["sight","toilet","wifi","safe","food"].map((k,i)=>`<button type="button" aria-pressed="${LAYERS.has(k)}" style="--c:${LCOLOR[k]}" onclick="toggleLayer('${k}')"><i>${LICON[k]}</i>${esc(v.layers[i])}</button>`).join("");}
+function toggleLayer(k){LAYERS.has(k)?LAYERS.delete(k):LAYERS.add(k);lsSet("sp_layers",[...LAYERS]);renderChips();drawLayers();}
+function drawLayers(){
+  if(!map)return;layerObjs.forEach(o=>o.setMap(null));layerObjs=[];LITEMS=[];const st=STAYS[S.stay];
+  const near=(arr,n,max)=>arr.filter(p=>p.lat).map(p=>({...p,d:km(st,p)})).filter(p=>p.d<=max).sort((a,b)=>a.d-b.d).slice(0,n);
+  const add=(k,p)=>{const i=LITEMS.push({k,...p})-1;
+    layerObjs.push(new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(p.lat,p.lng),zIndex:4,yAnchor:.5,
+      content:`<button type="button" class="lp" style="--c:${LCOLOR[k]}" onclick="layerInfo(${i})" aria-label="${esc(p.name)}">${LICON[k]}</button>`}));};
+  if(LAYERS.has("sight"))SPOTS.forEach(s=>add("sight",{name:s.ko,nameT:nm(s),addr:s.addr||"",lat:s.lat,lng:s.lng}));
+  if(LAYERS.has("food")){FOOD.forEach(f=>add("food",{name:f.ko,nameT:nm(f),addr:"",lat:f.lat,lng:f.lng}));
+    if(API.cent&&API.cent.rows)API.cent.rows.filter(c=>c.lat).forEach(c=>add("food",{name:c["업체명"],addr:c["업체주소"],lat:c.lat,lng:c.lng}));}
+  if(D&&LAYERS.has("toilet"))near(D.toilets,40,2).forEach(p=>add("toilet",{name:p.name,addr:p.addr,lat:p.lat,lng:p.lng,note:p.open}));
+  if(D&&LAYERS.has("wifi"))near(D.wifi,40,2).forEach(p=>add("wifi",{name:p.name,addr:p.addr,lat:p.lat,lng:p.lng}));
+  if(LAYERS.has("safe")){if(D)D.police.filter(p=>p.lat).forEach(p=>add("safe",{name:p.name,addr:p.addr,lat:p.lat,lng:p.lng}));
+    ["er","pharm","aed","shelter"].forEach(k=>(SAFE[k]&&SAFE[k].rows||[]).forEach(r=>r.lat&&add("safe",{name:r.name,addr:r.addr,tel:r.tel,lat:r.lat,lng:r.lng})));
+    if(!SAFE.done&&ps)loadSafety();}
+}
+function layerInfo(i){const p=LITEMS[i];if(!p)return;if(pcDot){pcDot.setMap(null);pcDot=null;}
+  PC={custom:{...p,dm:km(ORIGIN(),p)*1000}};renderPlaceCard();}
+
+// ---------- 오늘 꼭 알아야 할 것 (앱 안 배너) ----------
+function todayBanners(){
+  const v=V(),n=nowK(),out=[],seen=lsGet("sp_banner_off",{}),dkey=n.date;
+  const add=(id,html)=>{if(seen[id]!==dkey)out.push(`<div class="tb" data-id="${id}">${html}<button type="button" class="tb-x" onclick="hideBanner('${id}')" aria-label="${esc(v.dismiss)}">×</button></div>`);};
+  const night=n.h>=22||n.h<6;
+  if(night)add("night",`🌙 ${esc(v.bNight)} <a href="#" onclick="setTab(3);return false">${esc(v.bNightGo)}</a>`);
+  const rainH=S.w==="rain"?(n.h+2)%24:(S.w==="live"&&LIVE?((LIVE.hours.find(x=>x.pop>=60)||{}).h):null);
+  if(rainH!=null)add("rain",`☔ ${esc(v.bRain.replace("{h}",rainH))} <a href="#" onclick="setTab(0);return false">${esc(v.bRainGo)}</a>`);
+  if(eff()==="dust")add("dust",`😷 ${esc(v.bDust)}`);
+  if(D&&D.trash){const z=D.trash[S.zone!=null?S.zone:defaultZone()],ds=z.general.split("+").map(x=>"일월화수목금토".indexOf(x.trim()));
+    if(ds.includes(n.wd)&&n.h<+z.end.slice(0,2)){const bag=API.bag&&API.bag.rows&&API.bag.rows[0];
+      add("trash",`🗑️ ${esc(v.bTrash.replace("{s}",z.start).replace("{e}",z.end))}${bag?" "+esc(v.bTrashBag.replace("{shop}",bag["판매소명"]||bag["업소명"]||"")):""} <a href="#" onclick="setTab(3);return false">${esc(T[S.lang].tabs[3][0])} ›</a>`);}}
+  if(D&&D.events){const t=n.date,tm=new Date(Date.parse(t)+864e5).toISOString().slice(0,10),c=D.events.filter(e=>e.start<=tm&&e.end>=t).length;
+    if(c)add("ev",`🎉 ${esc(v.bEv.replace("{n}",c))} <a href="#" onclick="setTab(2);return false">${esc(v.bEvGo)}</a>`);}
+  document.body.classList.toggle("night",night);
+  return out.length?`<div class="tbs"><p class="tbs-t">${esc(v.todayT)}</p>${out.slice(0,3).join("")}</div>`:"";
+}
+function hideBanner(id){const s=lsGet("sp_banner_off",{});s[id]=nowK().date;lsSet("sp_banner_off",s);renderList();}
+
+// ---------- 오늘의 반나절 코스 ----------
+// 규칙은 여기만 고치면 됨
+const COURSE={stops:3,maxLegMin:25,food:true};
+function makeCourse(indoor){
+  const st=STAYS[S.stay],pool=SPOTS.filter(s=>s.lat&&(indoor?s.indoor:true));
+  const route=[];let cur=st;
+  while(route.length<COURSE.stops){const c=pool.filter(s=>!route.includes(s)).map(s=>({s,d:km(cur,s)})).sort((a,b)=>a.d-b.d)
+      .find(x=>walkMin(x.d)<=COURSE.maxLegMin)||pool.filter(s=>!route.includes(s)).map(s=>({s,d:km(cur,s)})).sort((a,b)=>a.d-b.d)[0];
+    if(!c)break;route.push(c.s);cur=c.s;}
+  const stops=route.map(s=>({name:nm(s),ko:s.ko,lat:s.lat,lng:s.lng}));
+  if(COURSE.food&&FOOD.length){const f=FOOD.map(f=>({f,d:km(cur,f)})).sort((a,b)=>a.d-b.d)[0];if(f)stops.push({name:nm(f.f),ko:f.f.ko,lat:f.f.lat,lng:f.f.lng,food:true});}
+  let prev=st,total=0;stops.forEach(s=>{s.min=walkMin(km(prev,s));total+=s.min;prev=s;});return {stops,total};
+}
+function courseHtml(){
+  const v=V(),bad=eff()!=="good";if(S.courseIndoor==null)S.courseIndoor=bad;const c=makeCourse(S.courseIndoor);if(!c.stops.length)return "";
+  return `<div class="course"><h3>🚶 ${esc(v.courseT)} <button type="button" class="seg-mini" onclick="S.courseIndoor=!S.courseIndoor;renderList()">${esc(S.courseIndoor?v.courseSun:v.courseRain)}</button></h3>
+    <ol>${c.stops.map(s=>`<li><span class="cm">+${s.min}′</span>${esc(s.name)}${s.food?` <span class="chip">${esc(v.courseFood)}</span>`:""}</li>`).join("")}</ol>
+    <p class="note">${esc(v.courseTotal.replace("{m}",c.total))}</p><button type="button" class="act-sub course-go" onclick="drawCourse()">${esc(v.courseMap)}</button></div>`;
+}
+let courseObjs=[];
+function drawCourse(){if(!map)return;courseObjs.forEach(o=>o.setMap(null));courseObjs=[];const c=makeCourse(S.courseIndoor),st=STAYS[S.stay];
+  const path=[new kakao.maps.LatLng(st.lat,st.lng),...c.stops.map(s=>new kakao.maps.LatLng(s.lat,s.lng))];
+  courseObjs.push(new kakao.maps.Polyline({map,path,strokeWeight:7,strokeColor:"#fff",strokeOpacity:.9,zIndex:5}));
+  courseObjs.push(new kakao.maps.Polyline({map,path,strokeWeight:4,strokeColor:"#2F6B5C",strokeOpacity:.95,strokeStyle:"shortdash",zIndex:6}));
+  const b=new kakao.maps.LatLngBounds();path.forEach(p=>b.extend(p));
+  c.stops.forEach((s,i)=>courseObjs.push(new kakao.maps.CustomOverlay({map,position:path[i+1],yAnchor:1,zIndex:21,content:`<div class="cpin"><b>${i+1}</b>${esc(s.name)}<small>+${s.min}′</small></div>`})));
+  map.setBounds(b,60,60,60,60);if(matchMedia("(max-width:950px)").matches)document.getElementById("map").scrollIntoView({behavior:"smooth"});}
+
+// ---------- 한식 메뉴 태그 (이름으로 추정) ----------
+function menuTags(m){const k=m.ko+" "+(m.en||"");const has=a=>a.some(w=>k.includes(w));
+  const spice=has(["불닭","매운","얼큰","짬뽕","낙지볶음","쭈꾸미"])?3:has(["김치","고추장","떡볶이","제육","닭갈비","육개장","비빔","찌개","볶음"])?2:has(["고추","양념"])?1:0;
+  const pork=has(["돼지","삼겹","목살","제육","보쌈","족발","순대","돈가스","돈까스","수육","김치찌개","부대"]);
+  const sea=has(["해물","해산","굴","오징어","낙지","문어","새우","조개","홍합","게","꽃게","생선","회","고등어","갈치","명태","황태","북어","멸치","전복","장어","조기","대구","꼬막","주꾸미","쭈꾸미","어묵","미역"]);
+  const meat=pork||has(["소고기","쇠고기","불고기","갈비","육회","닭","오리","곰탕","설렁탕","갈비탕","육개장","고기","순대","편육","사골","도가니","꼬리","곱창","막창","양곰탕","너비아니"]);
+  const nut=has(["땅콩","호두","잣","아몬드","견과"]);
+  return {spice,pork,sea,veg:!meat&&!sea&&!has(["탕","찌개","국","전골"]),nut};}
+
+// ---------- 정보가 틀렸어요 (시연용: 이 기기에만 저장) ----------
+let WRONG=null;
+function wrongOpen(name){WRONG=name;const v=V(),el=document.getElementById("wrongDlg");
+  el.innerHTML=`<div class="rs-box"><p class="rs-t">${esc(v.wrongT)}<small>${esc(name)}</small></p>${v.wrongR.map((r,i)=>`<label class="wr"><input type="radio" name="wr" value="${i}"${i?"":" checked"}> ${esc(r)}</label>`).join("")}
+    <button type="button" class="rs-b" onclick="wrongSend()">${esc(v.wrongSend)}</button><button type="button" class="rs-x" onclick="this.closest('.sheet').hidden=true">${esc(v.close)}</button></div>`;el.hidden=false;}
+function wrongSend(){const r=document.querySelector('#wrongDlg input[name=wr]:checked');const list=lsGet("sp_wrong",[]);
+  list.push({name:WRONG,reason:r?+r.value:0,at:new Date().toISOString()});lsSet("sp_wrong",list);document.getElementById("wrongDlg").hidden=true;toast(V().thanks);}
+const wrongBtn=name=>`<button type="button" class="wrong" onclick="event.stopPropagation();wrongOpen(${esc(JSON.stringify(name))})">${esc(V().wrong)}</button>`;
+
+// ---------- 글자 크기 · 고대비 ----------
+let A11Y=lsGet("sp_a11y",{size:0,hc:false});
+function applyA11y(){document.documentElement.dataset.size=A11Y.size;document.documentElement.classList.toggle("hicon",!!A11Y.hc);
+  const b1=document.getElementById("aSize"),b2=document.getElementById("aHc");if(b1){b1.setAttribute("aria-label",V().textSize);b1.title=V().textSize;}
+  if(b2){b2.setAttribute("aria-label",V().contrast);b2.title=V().contrast;b2.setAttribute("aria-pressed",!!A11Y.hc);}}
+function cycleSize(){A11Y.size=(A11Y.size+1)%3;lsSet("sp_a11y",A11Y);applyA11y();if(S.tab===4)renderList();if(map)setTimeout(()=>map.relayout(),50);}
+function toggleHc(){A11Y.hc=!A11Y.hc;lsSet("sp_a11y",A11Y);applyA11y();}
+
+// ---------- 첫날 도착 가이드 (QR로 처음 들어온 사람) ----------
+let ONB=0;
+function onbOpen(){ONB=0;document.getElementById("onb").hidden=false;renderOnb();}
+function onbClose(){document.getElementById("onb").hidden=true;lsSet("sp_onb",1);}
+function renderOnb(){
+  const v=V(),st=STAYS[S.stay],i=st.info,el=document.getElementById("onb");let b="";
+  if(ONB===0)b=`<div class="onb-lang">${[["en","English"],["zh","中文"],["ja","日本語"],["ko","한국어"]].map(([l,n])=>`<button type="button" class="${S.lang===l?"on":""}" onclick="S.lang='${l}';try{localStorage.setItem('sp_lang','${l}')}catch(e){};document.getElementById('lang').value='${l}';render();renderOnb()">${n}</button>`).join("")}</div>`;
+  if(ONB===1)b=i?`<p class="onb-big">${esc(st.name[S.lang])}</p><p>${esc(S.lang==="ko"?i.addrKo:i.addrEn)}</p><p class="note" lang="ko">${esc(i.addrKo)}</p><p>📶 <b>${esc(i.wifi)}</b> · ${esc(T4[S.lang].pw)} <b>${esc(i.wifiPw)}</b> <button type="button" class="copy" onclick="copyText(this,'${esc(i.wifiPw)}')">${esc(T4[S.lang].copy)}</button></p><p class="demo-note">${esc(T4[S.lang].demo)}</p>`:`<p>${esc(v.noStay)}</p>`;
+  if(ONB===2&&D){const z=D.trash[S.zone!=null?S.zone:defaultZone()],dn=T2[S.lang].dayN,ds=z.general.split("+").map(x=>dn["일월화수목금토".indexOf(x.trim())]).join(" · ");
+    b=`<div class="onb-icons"><span>🗑️</span><span>♻️</span><span>🍲</span></div><p class="onb-big">${esc(v.onbTrash.replace("{d}",ds).replace("{s}",z.start).replace("{e}",z.end))}</p><p>${esc(v.onbTrash2)}</p>`;}
+  if(ONB===3)b=`<div class="onb-calls"><a href="tel:112">112</a><a href="tel:119">119</a><a href="tel:1330">1330</a><a href="tel:120">120</a></div><p class="onb-big">${esc(v.onbSos)}</p><p class="onb-arrow">↘ <span class="sosbtn demo-sos">SOS</span></p>`;
+  if(ONB===4){const s=sortedSpots()[0];b=`<p class="onb-big">${s?esc(nm(s)):""}</p><p>${s?esc(s.d[S.lang]):""}</p><p class="note">${esc(v.onbHome)}</p>`;}
+  el.innerHTML=`<div class="onb-box" role="dialog" aria-label="${esc(v.onb[ONB])}"><p class="onb-step">${ONB+1} / 5</p><h3>${esc(v.onb[ONB])}</h3>${b}
+    <div class="onb-dots">${v.onb.map((_,k)=>`<i class="${k===ONB?"on":""}"></i>`).join("")}</div>
+    <div class="onb-nav"><button type="button" class="act-sub" onclick="onbClose()">${esc(v.onbSkip)}</button><button type="button" class="act-main" onclick="${ONB<4?"ONB++;renderOnb()":"onbClose()"}">${esc(ONB<4?v.onbNext:v.onbDone)}</button></div></div>`;
+}
+
 // ---------- 지도 기능 (틈길 방식) ----------
 // 1) 지도를 누르면 그 자리의 장소 · 주소 카드  2) 일반지도 / 위성지도 바꾸기
 // 카카오 JavaScript 키 하나로 services(Places · Geocoder) 사용 — 키는 기존 /api/config 방식 그대로
 const T11={
- en:{here:"Selected spot",inBld:"In this building",near:"Nearby",road:"Road address",jibun:"Lot address",kakao:"View on Kakao Map",route:"Route from my stay",dir:"Kakao Map directions",
+ en:{me:"My location",meDenied:"Location permission is off. Distances are shown from your stay.",meErr:"Couldn't find your location. Please try again.",meNo:"This browser can't share location.",meFar:"You seem to be far from Seongbuk-gu.",here:"Selected spot",inBld:"In this building",near:"Nearby",road:"Road address",jibun:"Lot address",kakao:"View on Kakao Map",route:"Route from my stay",dir:"Kakao Map directions",
   close:"Close",none:"No places found nearby.",away:"from the tapped spot",map:"Map",sky:"Satellite",tel:"Phone",loading:"Looking up this spot…"},
- zh:{here:"所选位置",inBld:"这栋建筑里的地方",near:"附近",road:"道路名地址",jibun:"地番地址",kakao:"在 Kakao Map 查看",route:"从住宿出发的路线",dir:"Kakao Map 路线",
+ zh:{me:"我的位置",meDenied:"未开启位置权限，距离按住宿位置显示。",meErr:"无法获取您的位置，请再试一次。",meNo:"此浏览器无法提供位置。",meFar:"您似乎离城北区较远。",here:"所选位置",inBld:"这栋建筑里的地方",near:"附近",road:"道路名地址",jibun:"地番地址",kakao:"在 Kakao Map 查看",route:"从住宿出发的路线",dir:"Kakao Map 路线",
   close:"关闭",none:"附近没有找到地点。",away:"距点击位置",map:"地图",sky:"卫星",tel:"电话",loading:"正在查询这个位置…"},
- ja:{here:"選んだ場所",inBld:"この建物にある場所",near:"近く",road:"道路名住所",jibun:"地番住所",kakao:"Kakao Map で見る",route:"宿泊先からのルート",dir:"Kakao Map で道案内",
+ ja:{me:"現在地",meDenied:"位置情報がオフです。距離は宿泊先から表示しています。",meErr:"現在地を取得できませんでした。もう一度お試しください。",meNo:"このブラウザは位置情報を使えません。",meFar:"城北区から離れた場所にいるようです。",here:"選んだ場所",inBld:"この建物にある場所",near:"近く",road:"道路名住所",jibun:"地番住所",kakao:"Kakao Map で見る",route:"宿泊先からのルート",dir:"Kakao Map で道案内",
   close:"閉じる",none:"近くに場所が見つかりません。",away:"タップした場所から",map:"地図",sky:"航空写真",tel:"電話",loading:"この場所を調べています…"},
- ko:{here:"선택한 곳",inBld:"이 건물에 있는 곳",near:"근처",road:"도로명",jibun:"지번",kakao:"카카오맵에서 보기",route:"숙소에서 가는 길",dir:"카카오맵 길찾기",
+ ko:{me:"내 위치",meDenied:"위치 권한이 꺼져 있어요. 거리는 숙소 기준으로 보여요.",meErr:"위치를 찾지 못했어요. 다시 눌러 주세요.",meNo:"이 브라우저는 위치를 쓸 수 없어요.",meFar:"성북구에서 멀리 계신 것 같아요.",here:"선택한 곳",inBld:"이 건물에 있는 곳",near:"근처",road:"도로명",jibun:"지번",kakao:"카카오맵에서 보기",route:"숙소에서 가는 길",dir:"카카오맵 길찾기",
   close:"닫기",none:"근처에서 찾은 장소가 없어요.",away:"누른 곳에서",map:"일반지도",sky:"위성지도",tel:"전화",loading:"이 자리를 찾아보는 중…"}
 };
 const PCAT={FD6:["Restaurant","餐厅","飲食店","음식점"],CE7:["Café","咖啡店","カフェ","카페"],CS2:["Convenience store","便利店","コンビニ","편의점"],MT1:["Supermarket","大型超市","スーパー","대형마트"],
@@ -1556,12 +2092,16 @@ function pcItem(p,big){
   const name=showKo()?esc(p.place_name):withRoman(p.place_name);
   return `<div class="pc-it${big?" big":""}"><div class="pc-h"><b>${name}</b>${pcat(p.category_group_code)?`<span class="chip">${esc(pcat(p.category_group_code))}</span>`:""}</div>
     <small>${esc(p.road_address_name||p.address_name)} · ${d} ${esc(v.away)}${p.phone?` · <a href="tel:${p.phone.replace(/[^0-9]/g,"")}">${esc(p.phone)}</a>`:""}</small>
-    ${big?`<div class="pc-act"><a href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)}</a><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.place_name).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(p.place_name,p.lat,p.lng)}</div>`:`<a class="pc-more" href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)} ↗</a>`}</div>`;
+    ${big?`<div class="pc-act"><a href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)}</a><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.place_name).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(p.place_name,p.lat,p.lng)}${skBtn({place:p.place_name,addr:p.road_address_name||p.address_name})}${sayBtn(p.place_name,"ko",V().sayKo)}</div>`:`<a class="pc-more" href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)} ↗</a>`}</div>`;
 }
 function pcRoute(lat,lng,label){closePlaceCard();showRoute(lat,lng,label);}
 function renderPlaceCard(){
   const el=document.getElementById("pcard"),v=T11[S.lang];if(!PC){el.hidden=true;return;}
   let h=`<button type="button" class="pc-x" onclick="closePlaceCard()" aria-label="${esc(v.close)}">×</button>`;
+  if(PC.custom){const p=PC.custom,d=p.dm<1000?Math.round(p.dm)+" m":(p.dm/1000).toFixed(1)+" km";
+    el.innerHTML=h+`<div class="pc-it big"><div class="pc-h"><b>${showKo()?esc(p.name):withRoman(p.name)}</b><span class="chip">${esc(V().layers[["sight","toilet","wifi","safe","food"].indexOf(p.k)])}</span></div>
+      ${p.addr?`<small>${esc(p.addr)}</small>`:""}${p.note?`<small>${esc(trOpen(p.note))}</small>`:""}<small>${d} · ${esc(wkTxt(p.dm/1000))} ${esc(ME?V().fromMe:V().fromStay)}</small>${p.tel?`<small><a href="tel:${p.tel.replace(/[^0-9]/g,"")}">${esc(p.tel)}</a></small>`:""}
+      <div class="pc-act"><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.name).replace(/'/g,"")}')">${esc(v.route)}</button>${routeBtn(p.name,p.lat,p.lng)}${skBtn({place:p.name,addr:p.addr||""})}${sayBtn(p.name,"ko",V().sayKo)}</div></div>`;el.hidden=false;return;}
   if(PC.loading)h+=`<p class="note">${esc(v.loading)}</p>`;
   else{
     if(PC.hit)h+=pcItem(PC.hit,true);
@@ -1585,10 +2125,28 @@ function setMapType(t){
 }
 function renderMapType(){
   const v=T11[S.lang],el=document.getElementById("mtype");if(!el)return;
-  el.innerHTML=["road","sky"].map(t=>`<button type="button" class="mt-${t}" aria-pressed="${MAPTYPE===t}" onclick="setMapType('${t}')"><span></span><small>${esc(t==="sky"?v.sky:v.map)}</small></button>`).join("");
+  el.innerHTML=["road","sky"].map(t=>`<button type="button" class="mt-${t}" aria-pressed="${MAPTYPE===t}" aria-label="${esc(t==="sky"?v.sky:v.map)}" title="${esc(t==="sky"?v.sky:v.map)}" onclick="setMapType('${t}')"></button>`).join("");
+  const ml=document.getElementById("myloc");if(ml){ml.setAttribute("aria-label",v.me);ml.title=v.me;}
+}
+let meOv=null,meCircle=null;
+function mapToast(t){const el=document.getElementById("maptoast");el.textContent=t;el.hidden=false;clearTimeout(mapToast.t);mapToast.t=setTimeout(()=>el.hidden=true,3500);}
+function myLocation(){
+  const v=T11[S.lang],btn=document.getElementById("myloc");
+  if(!map)return;
+  if(!navigator.geolocation){mapToast(v.meNo);return;}
+  btn.classList.add("busy");
+  navigator.geolocation.getCurrentPosition(p=>{   // 위치는 이 화면에서 점을 찍는 데만 쓰고 저장 · 전송하지 않음
+    btn.classList.remove("busy");btn.classList.add("on");ME={lat:p.coords.latitude,lng:p.coords.longitude};SAFE.key=null;if(!document.getElementById("sos").hidden)loadSafety();
+    const ll=new kakao.maps.LatLng(p.coords.latitude,p.coords.longitude);
+    if(meOv)meOv.setMap(null);if(meCircle)meCircle.setMap(null);
+    meCircle=new kakao.maps.Circle({map,center:ll,radius:Math.min(p.coords.accuracy||30,300),strokeWeight:1,strokeColor:"#1E7BE6",strokeOpacity:.5,fillColor:"#1E7BE6",fillOpacity:.12});
+    meOv=new kakao.maps.CustomOverlay({map,position:ll,content:'<div class="me-dot"></div>',xAnchor:.5,yAnchor:.5,zIndex:25});
+    map.panTo(ll);
+    if(km(STAYS[S.stay],{lat:p.coords.latitude,lng:p.coords.longitude})>20)mapToast(v.meFar);
+  },e=>{btn.classList.remove("busy");mapToast(e.code===1?v.meDenied:v.meErr);},{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
 }
 function initMapExtras(){
-  document.getElementById("mtype").hidden=false;setMapType(MAPTYPE);
+  document.getElementById("mapctl").hidden=false;setMapType(MAPTYPE);
   kakao.maps.event.addListener(map,"click",e=>showPlaceCard(e.latLng));
 }
 function pinHtml(cls,label,color){return `<div class="pin ${cls}" style="${color?`background:${color}`:""}"><span>${label}</span></div>`;}
@@ -1709,12 +2267,23 @@ apiGet("/api/config").then(j=>{KAKAO_JS_KEY=(j&&j.kakaoJsKey)||"";loadKakao();})
 if(S.tab===0)loadTour();
 // 공공데이터 정리본 · 기상청 실제 예보 불러오기 (없으면 v1처럼 시연 값으로 동작)
 fetch("sp_data.json").then(r=>r.json()).then(j=>{D=j;renderStats();render();geocodePolice();
+  if((qs.has("stay")||qs.has("from"))&&!lsGet("sp_onb",0)&&!qs.has("noguide"))onbOpen();   // QR로 처음 들어온 사람만
   // 서울 열린데이터광장 문화행사 실시간 (실패하면 sp_data.json 의 저장본 그대로)
   apiGet("/api/events").then(e=>{if(e.ok&&e.events.length){D.events=e.events;D.sources.events=e.src+" · 실시간";}if(e.ok&&e.seoul){D.seoul=e.seoul;}if(e.ok)render();});}).catch(()=>{document.getElementById("stats").innerHTML='<span class="note">sp_data.json 을 찾지 못했어요</span>';});
 fetch("/api/weather").then(r=>r.json()).then(j=>{
   if(j.ok&&j.hours&&j.hours.length){LIVE=j;document.querySelector('#wSeg [data-w="live"]').hidden=false;S.w="live";S.wx=null;render();}
   else document.getElementById("wNote").textContent="실제 예보 미연결 · 시연 값 ("+(j.reason||"")+")";
 }).catch(()=>{document.getElementById("wNote").textContent="실제 예보 미연결 · 시연 값";});
+
+// 시연판 「시간대 시나리오」
+document.querySelectorAll("#tSeg button").forEach(b=>b.onclick=()=>{const t=b.dataset.t;
+  if(t==="day")S.dayShift=((S.dayShift||0)+1)%7;else if(t==="")(S.fakeH=null,S.dayShift=0);else S.fakeH=+t;
+  const n=nowK();document.getElementById("tNote").textContent=`지금: ${["일","월","화","수","목","금","토"][n.wd]}요일 ${String(n.h).padStart(2,"0")}:${String(n.m).padStart(2,"0")}`;
+  lsSet("sp_banner_off",{});render();});
+// 오프라인 표시 + 서비스워커 (앱 화면 · sp_data.json · SOS · 보여 주기는 인터넷 없이도)
+function netState(){const el=document.getElementById("offbar");el.textContent=V().offline;el.hidden=navigator.onLine;}
+addEventListener("online",netState);addEventListener("offline",netState);netState();
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
 </html>

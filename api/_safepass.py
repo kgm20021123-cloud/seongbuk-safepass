@@ -445,7 +445,89 @@ def walk(q):
     return out
 
 
-ROUTES = {"config": config, "weather": weather, "dust": dust, "translate": translate, "models": ai_models, "data": data, "events": events, "tour": tour, "walk": walk}
+# ---------- 안전 시설 (SOS 패널): 약국 · 응급실 · AED · 민방위 대피시설 ----------
+# 공공데이터포털 활용신청이 필요 (승인 전에는 ok:false → 화면이 카카오 장소검색 · 안내로 대신함)
+NMC = "https://apis.data.go.kr/B552657"
+SAFETY = {
+    # 이름: (주소, 기본 파라미터)
+    "pharm": (env("nmcPharmacyApi", NMC + "/ErmctInsttInfoInqireService/getParmacyListInfoInqire"), {"Q0": "서울특별시", "Q1": "성북구", "numOfRows": "500"}),
+    "er": (env("nmcEmergencyApi", NMC + "/ErmctInfoInqireService/getEgytListInfoInqire"), {"Q0": "서울특별시", "numOfRows": "200"}),
+    "aed": (env("nmcAedApi", NMC + "/AEDInfoInqireService/getEgytAedManageInfoInqire"), {"Q0": "서울특별시", "Q1": "성북구", "numOfRows": "1000"}),
+    "shelter": (env("civilShelterApi", "https://apis.data.go.kr/1741000/civil_defense_shelter_info"), {"cond[ROAD_NM_WHOL_ADDR::LIKE]": "성북구", "numOfRows": "100", "returnType": "json"}),
+}
+
+
+def _items(body):
+    """XML/JSON 어느 쪽이 와도 item 목록으로"""
+    import xml.etree.ElementTree as ET
+    body = body.strip()
+    if body.startswith("{"):
+        j = json.loads(body)
+        # 흔한 모양: response.body.items.item / body.items / items
+        for path in (("response", "body", "items", "item"), ("response", "body", "items"), ("body", "items", "item"), ("body", "items"), ("items",)):
+            cur = j
+            for k in path:
+                cur = cur.get(k) if isinstance(cur, dict) else None
+                if cur is None:
+                    break
+            if cur is not None:
+                return cur if isinstance(cur, list) else [cur]
+        return []
+    root = ET.fromstring(body)
+    code = root.findtext(".//resultCode") or root.findtext(".//returnReasonCode")
+    if code and code not in ("00", "0", "0000"):
+        raise RuntimeError(root.findtext(".//resultMsg") or root.findtext(".//returnAuthMsg") or code)
+    return [{c.tag: (c.text or "").strip() for c in it} for it in root.iter("item")]
+
+
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def safety(q):
+    name = (q.get("set") or [""])[0]
+    if name not in SAFETY:
+        return {"ok": False, "reason": "set = pharm | er | aed | shelter"}
+    key = env("DATA_GO_KR_KEY")
+    if not key:
+        return {"ok": False, "reason": ".env 에 DATA_GO_KR_KEY 가 없습니다"}
+    url, params = SAFETY[name]
+
+    def go():
+        try:
+            full = url + "?" + urlencode({"serviceKey": key, "pageNo": "1", **params})
+            with urlopen(Request(full, headers=UA), timeout=5) as r:   # 5초 안에 안 오면 저장본 · 카카오로
+                raw = r.read().decode("utf-8", "replace")
+            items = _items(raw)
+        except Exception as e:
+            return {"ok": False, "reason": f"{name} 호출 실패 (활용신청 · 승인 확인): {e}"}
+        out = []
+        for it in items:
+            lat = _num(it.get("wgs84Lat") or it.get("lat") or it.get("LAT"))
+            lng = _num(it.get("wgs84Lon") or it.get("lon") or it.get("LOT") or it.get("lng"))
+            row = {"name": it.get("dutyName") or it.get("org") or it.get("FCLT_NM") or "",
+                   "addr": it.get("dutyAddr") or it.get("buildAddress") or it.get("ROAD_NM_WHOL_ADDR") or "",
+                   "tel": it.get("dutyTel1") or it.get("clerkTel") or "",
+                   "place": it.get("buildPlace") or it.get("FCLT_SE_NM") or "",
+                   "lat": lat if lat and 37 < lat < 38 else None, "lng": lng if lng and 126 < lng < 128 else None}
+            if name == "pharm":   # 요일별 영업시간 (1=월 … 7=일, 8=공휴일), 「0900」 모양
+                row["hours"] = {str(d): [it.get(f"dutyTime{d}s", ""), it.get(f"dutyTime{d}c", "")] for d in range(1, 9) if it.get(f"dutyTime{d}s")}
+            if name == "er" and "성북" not in row["addr"] and "종로" not in row["addr"]:
+                continue
+            if name == "shelter" and not row["lat"]:
+                row["x"], row["y"] = _num(it.get("XCRD") or it.get("X")), _num(it.get("YCRD") or it.get("Y"))   # EPSG:5174 — 승인 뒤 필드 확인 필요
+            out.append(row)
+        return {"ok": True, "count": len(out), "rows": out, "src": {"pharm": "국립중앙의료원 전국 약국 정보", "er": "국립중앙의료원 전국 응급의료기관 정보",
+                "aed": "국립중앙의료원 전국 자동심장충격기(AED) 정보", "shelter": "행정안전부 민방위대피시설"}[name]}
+
+    return cached("safety:" + name, 6 * 3600, go)
+
+
+ROUTES = {
+    "safety": safety,"config": config, "weather": weather, "dust": dust, "translate": translate, "models": ai_models, "data": data, "events": events, "tour": tour, "walk": walk}
 
 
 def respond(name, q):
