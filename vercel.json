@@ -1,0 +1,9 @@
+{
+  "regions": ["icn1"],
+  "functions": {
+    "api/*.py": {
+      "includeFiles": "api/**",
+      "maxDuration": 60
+    }
+  }
+}

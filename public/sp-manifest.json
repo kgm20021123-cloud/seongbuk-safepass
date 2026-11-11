@@ -1,0 +1,16 @@
+{
+ "name": "세이프패스 - 성북 관광·생활 안내",
+ "short_name": "세이프패스",
+ "start_url": "./?app=safepass",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#1f4e79",
+ "lang": "ko",
+ "icons": [
+  {"src": "sp-icon-192.png", "sizes": "192x192", "type": "image/png"},
+  {"src": "sp-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+ ],
+ "id": "/?app=safepass",
+ "description": "숙소 QR 하나로 성북구 안전 알림·관광지·먹거리·생활 안내를 영어·중국어·일본어로"
+}

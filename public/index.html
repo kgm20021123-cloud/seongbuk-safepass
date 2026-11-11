@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- 틈길 v9.6.3 방식: 웹앱(PWA) - '홈 화면에 추가'하면 앱처럼 실행 -->
+<link rel="manifest" href="sp-manifest.json">
+<meta name="theme-color" content="#26384A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="세이프패스">
+<link rel="apple-touch-icon" href="sp-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="sp-icon-192.png">
+<title>성북 세이프패스</title>
+<script src="qrcode.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* 세이프패스 v3 · 한옥 · 한양도성에서 가져온 색 */
+:root{
+  --giwa:#26384A;      /* 기와: 글자 */
+  --giwa-2:#4E5D6C;    /* 흐린 글자 */
+  --hanji:#F3F4EF;     /* 한지: 바탕 */
+  --paper:#FFFFFF;     /* 패스 종이 */
+  --stone:#C9C6BC;     /* 성곽 화강암: 구분선 */
+  --stone-2:#E3E1DA;
+  --celadon:#2F6B5C;   /* 청자: 강조 */
+  --celadon-s:#E2EEE9;
+  --dan:#B8402F;       /* 단청 주홍: 경고 · 휴관 */
+  --dan-s:#F6E4DF;
+  --rain:#2B6CB0;      /* 빗물 */
+  --rain-s:#E3EDF7;
+  --amber:#9A6200;     /* 미세먼지 */
+  --amber-s:#F7EEDC;
+  --serif:"Gowun Batang","Noto Serif KR","Noto Serif CJK SC","Hiragino Mincho ProN","Batang",serif;
+  --sans:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo","PingFang SC","Hiragino Sans","Noto Sans CJK SC",system-ui,sans-serif;
+  /* 이전 이름(자바스크립트 안의 인라인 색)과 맞춤 */
+  --navy:var(--giwa);--navy-d:var(--giwa);--ink:var(--giwa);--muted:var(--giwa-2);--line:var(--stone-2);--bg:var(--hanji);--card:var(--paper);
+  --ok:var(--celadon);--ok-s:var(--celadon-s);--warn:#7A5A2E;--warn-s:var(--amber-s);--bad:var(--dan);--bad-s:var(--dan-s);--soft:var(--celadon-s);--food:#8C3B4A;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--sans);color:var(--giwa);background:var(--hanji);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;color:inherit}
+a{color:var(--celadon)}
+button:focus-visible,select:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--celadon);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 머리줄: 조용하게 */
+header{height:56px;background:var(--hanji);border-bottom:1px solid var(--stone);display:flex;align-items:center;gap:10px;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
+.logo{display:flex;align-items:center;gap:9px;cursor:pointer;min-width:0}
+.logo img{width:28px;height:28px;border-radius:6px}
+.logo b{font-family:var(--serif);font-size:19px;font-weight:700;white-space:nowrap;letter-spacing:-.01em}
+.logo small{color:var(--giwa-2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hbtn{height:32px;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--stone);background:transparent;border-radius:6px;padding:0 10px;font-size:12.5px;white-space:nowrap}
+.hbtn.install{background:var(--celadon);border-color:var(--celadon);color:#fff;font-weight:600}
+.hbtn.demo[aria-pressed="true"]{background:var(--giwa);border-color:var(--giwa);color:#fff}
+select.lang{height:32px;border:1px solid var(--stone);border-radius:6px;padding:0 8px;font:inherit;font-size:13px;background:var(--paper);color:var(--giwa)}
+
+/* 세 칸: 정보 · 지도 · 시연판 */
+.app{display:grid;grid-template-columns:400px 1fr 300px;height:calc(100% - 56px)}
+.app.nodemo{grid-template-columns:400px 1fr}
+.app.nodemo .demo{display:none}
+.panel{background:var(--hanji);overflow:auto;border-right:1px solid var(--stone);display:flex;flex-direction:column}
+.demo{background:var(--paper);border-left:1px solid var(--stone);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:18px}
+#map{position:relative;min-width:0;background:#E6E7E1}
+#kakaoMap{position:absolute;inset:0}
+.mapmsg{position:absolute;z-index:5;left:12px;top:12px;right:12px;max-width:420px;background:var(--paper);padding:10px 12px;border:1px solid var(--stone);border-radius:6px;font-size:13px;line-height:1.55}
+.mapmsg:empty,.mapmsg[hidden]{display:none}
+
+/* ===== 패스: 이 화면의 하나뿐인 강조 ===== */
+.pass{margin:16px 16px 4px;background:var(--paper);border:1px solid var(--stone);border-radius:10px;position:relative}
+.pass-top{padding:16px 18px 14px}
+.stay .k{font-size:12px;color:var(--giwa-2);letter-spacing:.02em}
+.stay h2{margin:2px 0 6px;font-family:var(--serif);font-size:22px;font-weight:700;line-height:1.3;letter-spacing:-.01em}
+.stay .via{font-size:12px;color:var(--celadon);border-left:2px solid var(--celadon);padding-left:7px}
+/* 절취선: 양쪽에 반원 홈 + 점선 */
+.perf{position:relative;height:0;border-top:2px dashed var(--stone);margin:0 14px}
+.perf::before,.perf::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--hanji);border:1px solid var(--stone)}
+.perf::before{left:-24px;clip-path:inset(0 0 0 50%)}
+.perf::after{right:-24px;clip-path:inset(0 50% 0 0)}
+.wseg{padding:12px 18px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wseg .wl{font-size:12px;color:var(--giwa-2)}
+.wseg .wn{font-size:11.5px;color:var(--giwa-2);flex-basis:100%}
+.app.nodemo .wseg .wn{display:none}
+.wseg .seg{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--stone);border-radius:6px;overflow:hidden}
+.wseg .seg button{border:0;border-left:1px solid var(--stone);background:var(--paper);padding:5px 10px;font-size:12.5px}
+.wseg .seg button:first-child,.wseg .seg button[hidden]+button{border-left:0}
+.wseg .seg button[aria-pressed="true"]{background:var(--giwa);color:#fff}
+.wseg .seg button.live[aria-pressed="true"]{background:var(--celadon)}
+
+/* 오늘 판정: 패스의 주인공 */
+.wx{padding:12px 18px 18px;display:flex;flex-direction:column;gap:12px;--wxc:var(--celadon)}
+.wx.rain{--wxc:var(--rain)}.wx.dust{--wxc:var(--amber)}
+.wx .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.wx .hd b{font-size:12px;font-weight:500;color:var(--giwa-2)}
+.wx .hd small{font-size:11px;color:var(--giwa-2);text-align:right}
+.wx .sum{display:flex;gap:12px;align-items:flex-start}
+.wx .sum .ic{font-size:30px;line-height:1.1}
+.wx .sum strong{display:block;font-family:var(--serif);font-size:26px;line-height:1.25;font-weight:700;color:var(--wxc);letter-spacing:-.015em}
+.wx .sum span{display:block;margin-top:4px;font-size:14px;color:var(--giwa)}
+.wx .three{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--stone-2);border-bottom:1px solid var(--stone-2)}
+.wx .three button{background:none;border:0;border-left:1px solid var(--stone-2);padding:9px 10px;text-align:left;display:flex;flex-direction:column;gap:1px}
+.wx .three button:first-child{border-left:0;padding-left:0}
+.wx .three button small{font-size:11.5px;color:var(--giwa-2)}
+.wx .three button b{font-size:15px;font-variant-numeric:tabular-nums}
+.wx .three button i{font-style:normal;font-size:11px;color:var(--giwa-2)}
+.wx .three button[aria-expanded="true"] b{color:var(--wxc);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
+.lv{display:inline-block;font-size:11px;font-weight:600;padding:0 6px;border-radius:3px;color:#fff}
+.lv1{background:#2B6CB0}.lv2{background:#2F6B5C}.lv3{background:#B7791F}.lv4{background:#B8402F}
+.hourly{padding:2px 0 0}
+.hscroll{overflow-x:auto;scrollbar-width:thin}
+.hourly .ttl{font-size:12px;color:var(--giwa-2);margin:0 0 6px}
+.hrow{display:flex;gap:2px;min-width:max-content}
+.hc{width:44px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;border-radius:4px;font-variant-numeric:tabular-nums}
+.hc.now{background:var(--celadon-s)}
+.hc .h{font-size:11px;color:var(--giwa-2)}.hc.now .h{color:var(--celadon);font-weight:700}
+.hc .e{font-size:16px;line-height:1}
+.hc .v{font-size:12px;font-weight:600}
+.hc .bar{width:12px;height:40px;background:var(--stone-2);border-radius:2px;display:flex;align-items:flex-end;overflow:hidden}
+.hc .bar i{display:block;width:100%}
+.hc .s{font-size:10px;color:var(--giwa-2)}
+.hourly .nt{font-size:11.5px;color:var(--giwa-2);margin:6px 0 0}
+.legend2{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--giwa-2);margin:6px 0 0}.legend2 span{display:inline-flex;align-items:center;gap:4px}.legend2 i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* 탭: PC는 패스 아래, 휴대전화는 아래 고정 */
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:14px 16px 0;border-bottom:1px solid var(--stone)}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:8px 2px 9px;font-size:13.5px;font-weight:600;line-height:1.2;color:var(--giwa-2)}
+.tabs button small{display:block;font-weight:400;font-size:10.5px;margin-top:2px}
+.tabs button[aria-selected="true"]{color:var(--giwa);border-bottom-color:var(--celadon)}
+
+/* 목록: 상자 없이 화강암 선으로만 나눈다 */
+.list{padding:0 16px 18px;display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:2px 12px;padding:14px 0;border-bottom:1px solid var(--stone-2);cursor:pointer}
+.item:hover h3{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--stone)}
+.item .no{grid-row:1/3;width:22px;height:22px;border-radius:50%;color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.item h3{margin:0;font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.35}
+.item .orig{font-family:var(--sans);font-weight:400;color:var(--giwa-2);font-size:12px;margin-left:6px}
+.item .d{font-size:13px;color:var(--giwa);font-weight:600;font-variant-numeric:tabular-nums;align-self:start;padding-top:3px}
+.item .meta{grid-column:2/4;font-size:13.5px;color:var(--giwa);max-width:62ch}
+.item .meta .chip{margin-right:6px}
+.chip{display:inline;font-size:12px;font-weight:600;color:var(--giwa-2);padding:0;border:0;margin-right:8px}
+.chip.in{color:var(--celadon)}.chip.out{color:#7A5A2E}.chip.ext{color:var(--dan)}.chip.bd{color:var(--giwa-2);font-weight:500}
+.why{grid-column:2/4;font-size:13px;color:var(--rain);margin-top:4px}
+.hrs{grid-column:2/4;font-size:12.5px;color:var(--giwa);margin-top:4px;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+.hrs a{font-size:12px;color:var(--celadon)}
+.addr{grid-column:2/4;font-size:12px;color:var(--giwa-2)}
+.blk{padding:16px 0;border-bottom:1px solid var(--stone-2)}
+.blk h3{margin:0 0 6px;font-family:var(--serif);font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.blk p{margin:4px 0;font-size:13.5px;line-height:1.6;max-width:62ch}
+.big{font-family:var(--serif);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.near{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13.5px;padding:5px 0}
+.near > span:last-child{color:var(--giwa);font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.near small{display:block;font-size:11.5px;color:var(--giwa-2);font-weight:400}
+.tag{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--giwa-2)}
+.tag.live{color:var(--celadon)}
+.note{font-size:12.5px;color:var(--giwa-2);line-height:1.55}
+.foot{margin-top:auto;padding:12px 16px 18px;font-size:12px;color:var(--giwa-2);border-top:1px solid var(--stone)}
+.sec{font-family:var(--serif);font-size:15px;font-weight:700;color:var(--giwa);margin:20px 0 2px}
+.ride details{border-top:1px solid var(--stone-2);padding:8px 0}
+.ride summary{cursor:pointer;font-weight:700;font-size:14.5px;padding:4px 0;list-style-position:inside}
+.ride ol{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:st}
+.ride li{counter-increment:st;font-size:13.5px;line-height:1.55}
+.ride li span::before{content:counter(st);display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--celadon);color:#fff;font-size:12px;font-weight:700;margin-right:6px}
+.ride li.tip{background:#FBF3E4;border-left:3px solid #C98A2B;padding:8px 10px;border-radius:6px}
+.ride li.tip span::before{content:"!";background:#C98A2B}
+.ride img{display:block;width:100%;max-width:420px;aspect-ratio:4/3;object-fit:cover;border-radius:10px;margin:0 0 6px;background:var(--stone-2)}
+.srcl{font-size:11.5px;color:var(--giwa-2);margin:12px 0 0}
+.srcl a{color:var(--giwa-2)}
+.days{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:14px;margin:8px 0}
+.days span:nth-child(odd){color:var(--giwa-2)}.days .today{color:var(--celadon);font-weight:700}
+select.zone{border:1px solid var(--stone);border-radius:4px;padding:4px 6px;font:inherit;font-size:13px;max-width:100%;margin:4px 0;background:var(--paper);color:var(--giwa)}
+.srch{width:100%;border:1px solid var(--stone);border-radius:6px;padding:9px 11px;font:inherit;margin:8px 0 2px;background:var(--paper);color:var(--giwa)}
+.menu{padding:10px 0;border-bottom:1px solid var(--stone-2)}
+.menu b{font-family:var(--serif);font-size:15.5px}.menu .alt{font-size:12.5px;color:var(--giwa-2)}.menu p{margin:3px 0 0;font-size:12.5px;line-height:1.55;color:var(--giwa-2);max-width:62ch}
+.ev{padding:12px 0;border-bottom:1px solid var(--stone-2)}
+.ev h3{margin:2px 0 3px;font-family:var(--serif);font-size:15.5px;line-height:1.4}
+.ev .when{font-size:12.5px;color:var(--celadon);font-weight:600;font-variant-numeric:tabular-nums}
+.ev .hrs{margin-top:4px}
+details.off{grid-column:2/4;margin-top:6px;font-size:12.5px;border-left:2px solid var(--stone);padding-left:10px}
+details.off summary{cursor:pointer;color:var(--celadon);font-weight:600;list-style-position:outside}
+details.off p{margin:6px 0 2px;line-height:1.6;color:var(--giwa);max-width:62ch}
+details.off small{color:var(--giwa-2)}
+
+/* 시연판 */
+.demo h4{margin:0 0 8px;font-family:var(--serif);font-size:14px;font-weight:700;color:var(--giwa)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.demo .seg button{border:1px solid var(--stone);background:var(--paper);border-radius:6px;padding:6px 10px;font-size:12.5px}
+.demo .seg button[aria-pressed="true"]{background:var(--giwa);border-color:var(--giwa);color:#fff}
+.qrs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qr{border:1px solid var(--stone);border-radius:6px;padding:8px;text-align:center;font-size:12px}
+.qr .box{display:flex;justify-content:center;margin-bottom:4px;min-height:96px;align-items:center}
+.qr .box img{width:110px;height:110px;image-rendering:pixelated;background:#fff}
+.qr.wide{grid-column:1/3}
+.url{font-size:11px;word-break:break-all;color:var(--giwa-2)}
+.stat{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font-size:12.5px}.stat b{font-variant-numeric:tabular-nums;text-align:right}
+
+/* 지도 위 */
+.ov{background:var(--paper);border:1px solid var(--stone);border-radius:4px;padding:4px 8px;font-size:12px;font-weight:600;white-space:nowrap;transform:translateY(-46px)}
+.pin{width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 1px 3px rgba(38,56,74,.45);display:flex;align-items:center;justify-content:center}
+.pin span{transform:rotate(45deg);color:#fff;font-size:11px;font-weight:700}
+.pin.home{background:var(--giwa);width:30px;height:30px}
+.dot{width:10px;height:10px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 2px rgba(38,56,74,.6)}
+.install-tip{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:99;background:var(--giwa);color:#fff;border-radius:8px;padding:12px 40px 12px 14px;font-size:13px;line-height:1.55}
+.install-tip button{position:absolute;right:8px;top:6px;background:none;border:0;color:#fff;font-size:20px}
+
+
+
+/* v3: 숙소 카드 */
+.stay-map{margin:14px 0 4px;height:150px;border:1px solid var(--stone);border-radius:6px;overflow:hidden;background:#E6E7E1}
+.stay-map img{width:100%!important;height:100%!important;object-fit:cover}
+.stay-map.nomap{display:none}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:12px 0 0;font-size:13.5px}
+.facts dt{color:var(--giwa-2);font-size:12.5px;padding-top:1px}
+.facts dd{margin:0;color:var(--giwa)}
+.facts .num{font-variant-numeric:tabular-nums;font-weight:600}
+.facts .pw{color:var(--giwa-2);font-size:12.5px;margin-left:6px}
+.ko-addr{display:block;font-size:12.5px;color:var(--giwa-2)}
+.stay-act{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.act-main{background:var(--giwa);color:#fff;border:0;border-radius:6px;padding:10px 14px;font-weight:600;font-size:14px}
+.act-sub{font-size:14px;font-weight:600;color:var(--celadon);padding:10px 4px}
+.demo-note{margin:10px 0 0;font-size:11.5px;color:var(--giwa-2)}
+/* 택시 카드: 운전석에서도 읽히게 화면 가득 */
+.taxi{position:fixed;inset:0;z-index:200;background:var(--paper);display:flex;flex-direction:column;justify-content:center;gap:14px;padding:32px max(24px,env(safe-area-inset-left))}
+.taxi[hidden]{display:none}
+.taxi-k{margin:0;font-size:20px;color:var(--giwa-2)}
+.taxi-name{margin:0;font-family:var(--serif);font-size:30px;font-weight:700;color:var(--giwa)}
+.taxi-addr{margin:0;font-family:var(--serif);font-size:clamp(30px,8vw,56px);font-weight:700;line-height:1.3;color:var(--giwa);word-break:keep-all}
+.taxi-x{align-self:flex-start;margin-top:18px;border:1px solid var(--stone);background:var(--paper);border-radius:6px;padding:10px 18px;font-size:15px}
+
+
+/* v3: 탭으로 나눠 왼쪽을 가볍게 */
+.tabs button{font-size:13.5px;padding:10px 2px 11px}
+.demo .wseg{padding:0}
+.demo .wseg .seg{border:0;gap:6px;overflow:visible}
+.demo .wseg .seg button{border:1px solid var(--stone);border-radius:6px}
+.demo .wseg .seg button[aria-pressed="true"]{background:var(--giwa);border-color:var(--giwa);color:#fff}
+.demo .wseg .seg button.live[aria-pressed="true"]{background:var(--celadon);border-color:var(--celadon)}
+.demo .wseg .wn{display:block;margin-top:6px;font-size:11.5px;color:var(--giwa-2)}
+.wx{padding-top:14px}
+.pass-top{padding-bottom:16px}
+.list .stay-map{margin:16px 0 4px;height:170px}
+.list .facts{margin-top:14px}
+@media(min-width:951px){.list .stay-map{display:none}}   /* PC는 가운데 큰 지도가 숙소를 보여 줌 */
+
+@media(max-width:950px){.wx .sum strong{font-size:21px}.pass-top .stay h2,.stay h2{font-size:20px}}
+.walk{font-size:12.5px;font-weight:600;color:var(--celadon)}
+.ov small{display:block;font-weight:500;color:var(--giwa-2);font-size:11px}
+/* 관광객 상황극 반영 */
+.logo b .kn{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--giwa-2);margin-left:4px}
+.ai{grid-column:2/4;display:block;font-size:13px;color:var(--giwa);margin-top:2px}
+.ai i{font-style:normal;font-size:10.5px;color:var(--giwa-2);border:1px solid var(--stone);border-radius:3px;padding:0 4px;margin-left:4px;white-space:nowrap}
+.ev .ai{margin:0 0 2px}
+.wx-mini{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:2px 0;text-align:left}
+.wx-mini .ic{font-size:22px}
+.wx-mini b{font-family:var(--serif);font-size:17px;color:var(--wxc);flex:1;min-width:0}
+.wx-mini .m{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wx-mini .more{font-size:12.5px;color:var(--celadon);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+a.tel{color:var(--giwa);text-decoration:none;border-bottom:2px solid var(--celadon)}
+select.zone{display:block;width:100%;min-width:0}
+.copy{border:1px solid var(--stone);background:var(--paper);border-radius:4px;padding:1px 8px;font-size:12px;margin-left:6px}
+/* v3 다듬기 */
+.hbtn{line-height:1}
+.wx .hd{flex-direction:column;align-items:flex-start;gap:0}
+.wx .hd small{text-align:left}
+.wx .three button:last-child b{font-size:14px}
+.app.nodemo .wseg{display:none}          /* QR로 들어온 관광객에게는 시연 버튼을 숨김 */
+.app.nodemo .wx{padding-top:16px}
+@media(max-width:600px){
+  .hd-r{gap:6px}
+  #installTxt{display:none}
+  .hbtn.demo{display:none}            /* 휴대전화에서는 시연판 버튼을 숨김 (PC에서 조작) */
+  .hbtn.install{padding:0 9px}
+  .logo b{font-size:17px}
+}
+
+/* 휴대전화: 패스 → 목록 → 지도, 탭은 아래 고정 */
+@media(max-width:950px){
+  body{font-size:15px}
+  .app,.app.nodemo{grid-template-columns:1fr;height:auto;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .panel{border-right:0;overflow:visible}
+  #map{min-height:44vh;border-top:1px solid var(--stone)}
+  .demo{border-left:0;border-top:1px solid var(--stone)}
+  .logo small{display:none}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;background:var(--paper);border-top:1px solid var(--stone);border-bottom:0;padding:0 0 env(safe-area-inset-bottom)}
+  .tabs button{border-bottom:0;border-top:3px solid transparent;margin:0;padding:9px 2px 10px}
+  .tabs button[aria-selected="true"]{border-top-color:var(--celadon)}
+  .list{padding-top:4px}
+  .wx .sum strong{font-size:24px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" onclick="go('home')"><img src="sp-icon-192.png" alt=""><b>SafePass <span class="kn">세이프패스</span></b><small id="tagline"></small></div>
+  <div class="hd-r">
+    <select class="lang" id="lang" aria-label="Language">
+      <option value="en">🌐 EN</option><option value="zh">🌐 中文</option><option value="ja">🌐 日本語</option><option value="ko">🌐 한국어</option>
+    </select>
+    <button class="hbtn install" id="installBtn" hidden>📲 <span id="installTxt"></span></button>
+    <button class="hbtn demo" id="demoBtn" aria-pressed="true">🎬 시연</button>
+  </div>
+</header>
+
+<div class="app" id="app">
+  <aside class="panel">
+    <section class="pass" aria-label="Your SafePass">
+      <div class="pass-top stay">
+        <div class="k" id="stayK"></div>
+        <h2 id="stayName"></h2>
+        <span class="via" id="via"></span>
+      </div>
+      <div class="perf" aria-hidden="true"></div>
+      <div class="wx" id="wx" role="region" aria-live="polite"></div>
+    </section>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="list" id="list" role="tabpanel"></div>
+    <div class="foot" id="foot"></div>
+  </aside>
+
+  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div></section>
+
+  <aside class="demo" aria-label="시연 조작판">
+    <div>
+      <h4>1. QR 찍기 (같은 와이파이의 휴대전화)</h4>
+      <div class="qrs">
+        <div class="qr"><div class="box" id="qrA"></div><b>숙소 A</b><br>예약 안내 메시지</div>
+        <div class="qr"><div class="box" id="qrB"></div><b>숙소 B</b><br>숙소 안내문</div>
+        <div class="qr wide"><div class="box" id="qrG"></div><b>성북구청 누리집 QR</b> (숙소 없이 구청 기준)</div>
+      </div>
+      <p class="url" id="lanUrl"></p>
+    </div>
+    <div>
+      <h4>2. PC에서 바로 바꾸기</h4>
+      <div class="seg" id="staySeg">
+        <button data-stay="A">숙소 A</button><button data-stay="B">숙소 B</button><button data-stay="G">구청 기준</button>
+      </div>
+    </div>
+    <div>
+      <h4>3. 날씨 시나리오</h4>
+      <div class="wseg">
+      
+      <div class="seg" id="wSeg">
+        <button data-w="live" class="live" hidden>📡 실제 예보</button><button data-w="good">☀️ 맑음</button><button data-w="rain">☔ 비 예보</button><button data-w="dust">😷 미세먼지 나쁨</button>
+      </div>
+      <span class="wn" id="wNote"></span>
+    </div>
+    </div>
+    <div>
+      <h4>4. 숫자로 본 성북 (공공데이터)</h4>
+      <div class="stat" id="stats"><span class="note">불러오는 중…</span></div>
+      <label class="note" style="display:block;margin-top:8px"><input type="checkbox" id="stayLayer"> 지도에 성북구 등록 숙소 표시</label>
+    </div>
+    <div>
+      <h4>시연 순서</h4>
+      <ol class="note" style="margin:0;padding-left:18px">
+        <li>숙소 A QR → 영어 → 「📡 실제 예보」(기상청) 확인</li>
+        <li>관광지: 가까운 순 · 숙정문 · 혜화문 · 낙산공원의 공식 영문 안내 펼치기</li>
+        <li>날씨를 「비 예보」로 → 실내 관광지가 먼저</li>
+        <li>먹거리: 한식 메뉴 검색 (예: 비빔밥, bulgogi)</li>
+        <li>행사: 서울문화포털 성북 행사 (날짜 · 요금 · 링크)</li>
+        <li>생활: 삼선동 쓰레기 요일 · 화장실 · 와이파이 · 가까운 지구대/파출소</li>
+        <li>숙소 B QR → 성북동 기준으로 요일 · 시설이 바뀜</li>
+      </ol>
+    </div>
+    <p class="note">숙소 A · B는 가상입니다. 날씨(기상청) · 문화행사(서울 열린데이터광장) · 관광정보(한국관광공사) · 백년가게 · 주민센터 · 봉투 판매소(공공데이터포털)는 실시간으로 받아 오고, 쓰레기 요일 · 화장실 · 와이파이 · 지구대/파출소 · 한식 메뉴 · 한양도성 안내는 sp_data.json 저장본입니다. 미세먼지는 아직 시연 값입니다.</p>
+  </aside>
+</div>
+<div class="taxi" id="taxi" hidden role="dialog" aria-modal="true" aria-labelledby="taxiAddr">
+  <p class="taxi-k" id="taxiK"></p>
+  <p class="taxi-name" id="taxiName"></p>
+  <p class="taxi-addr" id="taxiAddr"></p>
+  <button class="taxi-x" id="taxiX"></button>
+</div>
+<div class="install-tip" id="installTip" hidden><span id="installTipTxt"></span><button aria-label="닫기" onclick="this.parentNode.hidden=true">×</button></div>
+
+<script>
+let KAKAO_JS_KEY = "";   // /api/config 가 .env 의 javascriptKey 를 알려 줌 (카카오 콘솔에 등록한 주소에서만 동작하는 공개용 키)
+const GU = {lat:37.5894, lng:127.0167};    // 성북구청
+let D = null;      // sp_data.json : 공공데이터 정리본 (tools/make_sp_data.py 로 만듦)
+let LIVE = null;   // /api/weather : 기상청 단기예보 (서버가 공공데이터포털 키로 받아 옴)
+
+const STAYS = {
+  A:{lat:37.5890,lng:127.0050,name:{en:"Hansung Univ. Station Guesthouse",zh:"汉城大入口站旁民宿",ja:"漢城大入口駅前ゲストハウス",ko:"한성대입구역 근처 게스트하우스"},zone:"A",
+     info:{addrKo:"서울 성북구 삼선교로 ○○ (시연용 가상 주소)",addrEn:"○○ Samseongyo-ro, Seongbuk-gu, Seoul (demo address)",
+       stn:"hansung",checkIn:"15:00",checkOut:"11:00",tel:"010-0000-0000",wifi:"SafePass_Guest_A",wifiPw:"seongbuk-a"}},
+  B:{lat:37.5962,lng:126.9968,name:{en:"Seongbuk-dong Hanok Stay",zh:"城北洞韩屋民宿",ja:"城北洞 韓屋ステイ",ko:"성북동 한옥 스테이"},zone:"B",
+     info:{addrKo:"서울 성북구 성북로 ○○길 (시연용 가상 주소)",addrEn:"○○ Seongbuk-ro, Seongbuk-gu, Seoul (demo address)",
+       stn:"hansung",checkIn:"16:00",checkOut:"11:00",tel:"010-0000-0000",wifi:"Hanok_Stay_B",wifiPw:"seongbuk-b"}},
+  G:{lat:GU.lat,lng:GU.lng,name:{en:"Seongbuk-gu Office (no stay selected)",zh:"城北区厅（未选择住宿）",ja:"城北区庁（宿泊先未選択）",ko:"성북구청 기준 (숙소 없음)"},zone:"A"}
+};
+
+// 관광지: 성북구청 영문 누리집(sb.go.kr/en) '성북 방문하기' 9곳 + 실내 대안 2곳 + 낙산공원
+// q = 카카오 장소 검색어 / lat·lng 은 검색 실패 때 쓰는 근사값 / src: gu = 구청 누리집, ex = 그 밖
+// hrs: 요일(0=일)별 [여는 시각, 닫는 시각] · 구청 누리집 기재 그대로. null = 누리집에 시간 없음
+const SBEN = k=>"https://sb.go.kr/en/contents.do?key="+k;
+const ALL7 = (o,c)=>({0:[o,c],1:[o,c],2:[o,c],3:[o,c],4:[o,c],5:[o,c],6:[o,c]});
+const SPOTS = [
+  {ko:"의릉",q:"의릉 석관동",lat:37.6127,lng:127.0569,indoor:false,gu:"sb",src:"gu",key:471,addr:"서울 성북구 화랑로32길 146-20",
+   hrs:{2:["09:00","18:00"],3:["09:00","18:00"],4:["09:00","18:00"],5:["09:00","18:00"],6:["09:00","18:00"],0:["09:00","18:00"]},hrsNote:"season",
+   n:{en:"Uireung Royal Tomb",zh:"懿陵",ja:"懿陵（ウィルン）"},
+   d:{en:"Tomb of King Gyeongjong, Joseon's 20th king, and Queen Seonui. The two mounds stand one in front of the other.",zh:"朝鲜第20代王景宗与宣懿王后的陵墓，两座陵前后排列。",ja:"朝鮮第20代王・景宗と宣懿王后の陵。2つの陵が前後に並ぶ。",ko:"조선 20대 경종과 선의왕후의 능. 두 능이 앞뒤로 놓여 있다."}},
+  {ko:"정릉",q:"서울 정릉 신덕왕후",lat:37.6026,lng:127.0118,indoor:false,gu:"sb",src:"gu",key:472,addr:"서울 성북구 아리랑로19길 116",hrs:ALL7("06:00","18:00"),
+   n:{en:"Jeongneung Royal Tomb",zh:"贞陵",ja:"貞陵"},
+   d:{en:"Tomb of Queen Sindeok, wife of Joseon's founder King Taejo. Simple early-Joseon style with a forest path.",zh:"朝鲜开国君主太祖之妃神德王后的陵墓，朝鲜初期简朴风格，有林间步道。",ja:"朝鮮を建国した太祖の妃・神徳王后の陵。朝鮮初期の素朴な様式で、森の散策路がある。",ko:"태조의 왕비 신덕왕후의 능. 조선 초기의 소박한 양식, 숲길이 있다."}},
+  {ko:"숙정문",q:"숙정문",lat:37.5958,lng:126.9813,indoor:false,gu:"bd",src:"gu",key:473,hy:13,addr:"서울 종로구 삼청동",hrs:null,
+   n:{en:"Sukjeongmun Gate",zh:"肃靖门",ja:"粛靖門"},
+   d:{en:"North gate of the Seoul City Wall, built in 1396 on a steep mountain trail. Reopened to the public in 2006.",zh:"汉阳都城北门，建于1396年，位于陡峭山路上，2006年重新开放。",ja:"漢陽都城の北門。1396年築、険しい山道にある。2006年に一般公開を再開。",ko:"한양도성의 북문(1396). 가파른 산길에 있으며 2006년 다시 개방됐다."}},
+  {ko:"혜화문",q:"혜화문",lat:37.5877,lng:127.0034,indoor:false,gu:"bd",src:"gu",key:474,hy:17,addr:"서울 종로구 혜화동",hrs:null,
+   n:{en:"Hyehwamun Gate",zh:"惠化门",ja:"恵化門"},
+   d:{en:"Small northeast gate of the Seoul City Wall, first built in 1397 and restored in 1992. A short walk from Hansung Univ. Station.",zh:"汉阳都城东北侧的小门，始建于1397年，1992年复原。距汉城大入口站步行不远。",ja:"漢陽都城の北東の小門。1397年創建、1992年に復元。漢城大入口駅から歩いてすぐ。",ko:"한양도성 동북쪽 소문(1397년 축조, 1992년 복원). 한성대입구역에서 가깝다."}},
+  {ko:"심우장",q:"심우장",lat:37.5977,lng:126.9994,indoor:false,gu:"sb",src:"gu",key:476,addr:"서울 성북구 성북로29길 24",hrs:ALL7("09:00","18:00"),
+   n:{en:"Simujang (Han Yong-un's House)",zh:"寻牛庄（韩龙云故居）",ja:"尋牛荘（韓龍雲の家）"},
+   d:{en:"Home of poet and independence activist Han Yong-un from 1933 to 1944. A modest north-facing hanok.",zh:"诗人、独立运动家韩龙云1933–1944年的故居，朴素的坐南朝北韩屋。",ja:"詩人で独立運動家の韓龍雲が1933〜1944年に暮らした、北向きの質素な韓屋。",ko:"시인·독립운동가 한용운이 1933~1944년 살던 북향의 소박한 한옥."}},
+  {ko:"이태준 가옥 (수연산방)",q:"수연산방",lat:37.5949,lng:126.9958,indoor:true,gu:"sb",src:"gu",key:477,addr:"서울 성북구 성북로26길 8",
+   hrs:{2:["11:30","18:00"],3:["11:30","18:00"],4:["11:30","18:00"],5:["11:30","18:00"],6:["11:30","22:00"],0:["11:30","22:00"]},
+   n:{en:"Lee Tae-jun House (Suyeon Sanbang tea house)",zh:"李泰俊故居（寿砚山房茶馆）",ja:"李泰俊の家（寿硯山房・伝統茶房）"},
+   d:{en:"1933 hanok of novelist Lee Tae-jun, now a traditional tea house. Good for a rainy day.",zh:"小说家李泰俊1933年建的韩屋，现为传统茶馆，雨天也适合。",ja:"小説家・李泰俊の1933年の韓屋。今は伝統茶房で、雨の日にも。",ko:"소설가 이태준의 1933년 한옥. 지금은 전통 찻집이라 비 오는 날에도 좋다."}},
+  {ko:"최순우 옛집",q:"최순우옛집",lat:37.5934,lng:126.9958,indoor:true,gu:"sb",src:"gu",key:478,addr:"서울 성북구 성북로15길 9",tel:"02-3675-3402",closedExplicit:true,
+   hrs:{2:["10:00","16:00"],3:["10:00","16:00"],4:["10:00","16:00"],5:["10:00","16:00"],6:["10:00","16:00"]},closedMonths:[12,1,2,3],
+   n:{en:"Choi Sun-u's House",zh:"崔淳雨故居",ja:"崔淳雨旧宅"},
+   d:{en:"1930s hanok of art historian Choi Sun-u, saved by citizens through the National Trust. Closed Dec–Mar.",zh:"美术史学家崔淳雨的20世纪30年代韩屋，由市民通过国民信托保存。12–3月闭馆。",ja:"美術史家・崔淳雨の1930年代の韓屋。市民がナショナル・トラストで守った。12〜3月休館。",ko:"미술사학자 최순우의 1930년대 한옥. 시민 모금(내셔널트러스트)으로 지켰다. 12~3월 휴관."}},
+  {ko:"한양도성 (성북동 구간)",q:"한양도성 성북동",lat:37.5946,lng:126.9990,indoor:false,gu:"sb",src:"gu",key:479,addr:"성북동 일대 (한양도성 순성길)",hrs:null,
+   n:{en:"Seoul City Wall (Seongbuk-dong section)",zh:"汉阳都城（城北洞段）",ja:"漢陽都城（城北洞区間）"},
+   d:{en:"18.6 km Joseon city wall built in 1396. Walk the trail along the ridge above Seongbuk-dong.",zh:"1396年修建、全长18.6公里的朝鲜都城城墙，可沿城北洞上方山脊步行。",ja:"1396年築、全長18.6kmの朝鮮の都城。城北洞の上の尾根に沿って歩ける。",ko:"1396년 쌓은 18.6km의 도성. 성북동 위 능선을 따라 걸을 수 있다."}},
+  {ko:"길상사",q:"길상사 성북동",lat:37.5995,lng:126.9946,indoor:false,gu:"sb",src:"gu",key:480,addr:"서울 성북구 선잠로5길 68",hrs:"gilsangsa",
+   n:{en:"Gilsangsa Temple",zh:"吉祥寺",ja:"吉祥寺（キルサンサ）"},
+   d:{en:"Buddhist temple opened in 1997 on the grounds of a former traditional house. Quiet woods and two old zelkova trees.",zh:"1997年在原传统宅院旧址上开设的寺庙，林木幽静，有两棵古榉树。",ja:"1997年、かつての伝統家屋の跡に開かれた寺。静かな林と2本の古いケヤキ。",ko:"1997년 옛 대원각 터에 문을 연 절. 조용한 숲과 오래된 느티나무 두 그루."}},
+  {ko:"성북구립미술관",q:"성북구립미술관",lat:37.5927,lng:126.9985,indoor:true,gu:"sb",src:"ex",hrs:null,
+   n:{en:"Seongbuk Museum of Art",zh:"城北区立美术馆",ja:"城北区立美術館"},
+   d:{en:"District art museum on Seongbuk-ro. Indoor option.",zh:"城北路上的区立美术馆，室内可选。",ja:"城北路の区立美術館。屋内の選択肢。",ko:"성북로의 구립 미술관. 실내 대안."}},
+  {ko:"성북선잠박물관",q:"성북선잠박물관",lat:37.5925,lng:126.9970,indoor:true,gu:"sb",src:"ex",hrs:null,
+   n:{en:"Seongbuk Seonjam Museum",zh:"城北先蚕博物馆",ja:"城北先蚕博物館"},
+   d:{en:"Museum on the royal silkworm rite. Indoor option.",zh:"介绍王室先蚕祭的博物馆，室内可选。",ja:"王室の先蚕祭を紹介する博物館。屋内の選択肢。",ko:"왕실 선잠제를 소개하는 박물관. 실내 대안."}},
+  {ko:"낙산공원",q:"낙산공원",lat:37.5806,lng:127.0072,indoor:false,gu:"jn",src:"ex",hy:20,hrs:null,
+   n:{en:"Naksan Park",zh:"骆山公园",ja:"駱山公園"},
+   d:{en:"City wall park with night views, near Hansung Univ. Station.",zh:"可欣赏夜景的城墙公园，靠近汉城大入口站。",ja:"夜景が見える城壁公園。漢城大入口駅の近く。",ko:"야경이 좋은 성곽 공원. 한성대입구역에서 가깝다."}},
+  // v2: 한양도성 관심지점(서울역사박물관) 중 숙소 근처 3곳 추가
+  {ko:"북정마을",q:"북정마을",lat:37.5953,lng:127.0016,indoor:false,gu:"sb",src:"ex",hy:16,hrs:null,addr:"서울 성북구 성북동 (한양도성 아래)",
+   n:{en:"Bukjeong Village",zh:"北井村",ja:"北井（プクチョン）村"},
+   d:{en:"Hillside village just below the city wall, with old alleys and views over Seongbuk-dong.",zh:"位于城墙下方的山坡村落，保留老胡同，可俯瞰城北洞。",ja:"城壁のすぐ下の坂の村。古い路地と城北洞の眺め。",ko:"성곽 바로 아래 언덕 마을. 옛 골목과 성북동 전망."}},
+  {ko:"말바위안내소",q:"말바위안내소",lat:37.5925,lng:126.9853,indoor:false,gu:"bd",src:"ex",hy:14,hrs:null,addr:"서울 종로구 삼청동 (북악산 구간)",
+   n:{en:"Malbawi Information Center",zh:"马岩咨询处",ja:"マルバウィ案内所"},
+   d:{en:"Entry point to the Bugaksan section of the city wall, toward Sukjeongmun Gate.",zh:"北岳山城墙段的入口，可通往肃靖门。",ja:"北岳山区間の城壁への入口。粛靖門方面へ。",ko:"숙정문으로 이어지는 북악산 구간 출입 지점."}},
+  {ko:"낙산정",q:"낙산정",lat:37.5838,lng:127.0081,indoor:false,gu:"jn",src:"ex",hy:21,hrs:null,
+   n:{en:"Naksanjeong Pavilion",zh:"骆山亭",ja:"駱山亭"},
+   d:{en:"Small pavilion on the Naksan section of the wall, near Hansung Univ. Station.",zh:"骆山城墙段上的小亭子，靠近汉城大入口站。",ja:"駱山区間の小さな東屋。漢城大入口駅の近く。",ko:"낙산 구간의 작은 정자. 한성대입구역에서 가깝다."}}
+];
+
+// 축제: 성북구청 영문 누리집 '성북에서 즐거운 시간 보내기 > 축제' (정확한 날짜는 누리집에 없음)
+const FEST = [
+  {m:[1],key:449,tel:"02-2241-2603",n:{en:"Sunrise Event",zh:"新年日出活动",ja:"初日の出イベント",ko:"해맞이 행사"},p:{en:"Jan 1 · Gaeunsan Park field",zh:"1月1日 · 开运山公园",ja:"1月1日 · 開運山公園",ko:"1월 1일 · 개운산 공원"}},
+  {m:[5],key:450,tel:"02-2241-2603",hold:true,n:{en:"Seonjamjehyang (royal silkworm rite)",zh:"先蚕祭享",ja:"先蚕祭享",ko:"선잠제향"},p:{en:"May · Seonjam site, Seongbuk-dong",zh:"5月 · 城北洞先蚕坛",ja:"5月 · 城北洞 先蚕壇",ko:"5월 · 성북동 선잠단지"}},
+  {m:[5],key:451,tel:"02-6906-9298",n:{en:"Seongbuk World Food Festival (Nurimasil)",zh:"城北世界美食节（Nurimasil）",ja:"城北ワールドフードフェスティバル（ヌリマシル）",ko:"성북세계음식축제 누리마실"},p:{en:"May · Seongbuk-ro 8ga-gil",zh:"5月 · 城北路8街",ja:"5月 · 城北路8ガギル",ko:"5월 · 성북로8가길 일대"}},
+  {m:[7,8],key:452,tel:"02-2241-2603",n:{en:"Seongbuk Culture Vacation",zh:"城北文化假期",ja:"城北文化バケーション",ko:"성북문화휴가"},p:{en:"Jul–Aug · local elementary schools",zh:"7–8月 · 区内小学",ja:"7〜8月 · 区内の小学校",ko:"7~8월 · 관내 초등학교"}},
+  {m:[9,10],key:453,tel:"02-765-1611",n:{en:"Seongbuk-dong Cultural Heritage Night Tour",zh:"城北洞文化遗产夜游",ja:"城北洞 文化遺産ナイトツアー",ko:"성북동 문화유산 야행"},p:{en:"Sep–Oct · Seongbuk-dong (night walks, heritage sites)",zh:"9–10月 · 城北洞（夜间步行、文化遗产）",ja:"9〜10月 · 城北洞（夜の散策・文化遺産）",ko:"9~10월 · 성북동 (야간 탐방)"}},
+  {m:[9,10],key:454,tel:"02-2241-2603",n:{en:"Local Town Festivals",zh:"各洞社区节庆",ja:"町内フェスティバル",ko:"동네 축제"},p:{en:"Sep–Oct · Samseon, Jeongneung, Jangwi, Seokgwan",zh:"9–10月 · 三仙、贞陵、长位、石关",ja:"9〜10月 · 三仙・貞陵・長位・石串",ko:"9~10월 · 삼선·정릉·장위·석관 등"}},
+  {m:[9],key:6489,tel:"02-2241-6381",n:{en:"Latin America Festival",zh:"拉丁美洲节",ja:"ラテンアメリカ・フェスティバル",ko:"라틴아메리카 축제"},p:{en:"Sep (1 day) · Seongbukcheon Fountain Plaza · Hansung Univ. Stn Exit 2",zh:"9月（1天）· 城北川喷泉广场 · 汉城大入口站2号出口",ja:"9月（1日間）· 城北川噴水広場 · 漢城大入口駅2番出口",ko:"9월 (하루) · 성북천 분수광장 · 한성대입구역 2번 출구"}},
+  {m:[12],key:6490,tel:"02-2241-6381",n:{en:"European Christmas Market",zh:"欧洲圣诞市集",ja:"ヨーロッパ・クリスマスマーケット",ko:"유럽 크리스마스 마켓"},p:{en:"Dec (2 days) · Seongbukcheon Fountain Plaza · Hansung Univ. Stn Exit 2",zh:"12月（2天）· 城北川喷泉广场 · 汉城大入口站2号出口",ja:"12月（2日間）· 城北川噴水広場 · 漢城大入口駅2番出口",ko:"12월 (이틀) · 성북천 분수광장 · 한성대입구역 2번 출구"}},
+  {m:[],key:6488,n:{en:"Seongbuk Street Culture Festival",zh:"城北街头文化节",ja:"城北ストリート文化祭",ko:"성북거리문화축제"},p:{en:"Date not listed · Dolgoji-ro 22-gil",zh:"日期未公布 · 乭串路22街",ja:"日程未掲載 · トルコジ路22ギル",ko:"날짜 미기재 · 돌곶이로22길"}}
+];
+
+// 생활: 성북구청 영문 누리집 '가정 쓰레기 배출' (2025-05-12 시행 배출표)
+const DONG = {
+  A:{ko:"삼선동",en:"Samseon-dong",zh:"三仙洞",ja:"三仙洞",days:[2,4,0],center:{ko:"삼선동 주민센터",en:"Samseon-dong Community Service Center",addr:"보문로 190",tel:"02-2241-5040"}},
+  B:{ko:"성북동",en:"Seongbuk-dong",zh:"城北洞",ja:"城北洞",days:[1,3,5],center:{ko:"성북동 주민센터",en:"Seongbuk-dong Community Service Center",addr:"",tel:"02-925-9960"}},
+  G:{ko:"삼선동",en:"Samseon-dong",zh:"三仙洞",ja:"三仙洞",days:[2,4,0],center:{ko:"삼선동 주민센터",en:"Samseon-dong Community Service Center",addr:"보문로 190",tel:"02-2241-5040"}}
+};
+
+const T2 = {
+ en:{notListed:"not listed",dayN:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],openNow:"Open now",closedNow:"Closed now",closedSeason:"Closed this season",noHrs:"Hours not listed. Check before you go",
+   hrsSeason:"(hours may vary in summer and winter)",gilsang:"Apr–Sep 03:30–19:00 · Oct–Mar 03:30–20:00",closedOn:"Closed",source:"Seongbuk-gu Office",other:"other source",border:"Jongno-gu address · on the Seongbuk border",
+   tabs2:["Festivals","Seongbuk-gu"],thisMonth:"This month",next:"Coming up",later:"Other festivals",onHold:"On hold during restoration (as of 2019) — check first",exact:"Exact dates are not on the Seongbuk-gu site. Check before you go.",
+   trashT:"Garbage day for your area",trashDays:"{dong}: {days}, put out 18:00–20:00",trashRule:"Put it in front of your building. Collection starts after 19:00. Don't put it out the day before a public holiday (unless it's a Sunday).",
+   bags:"Bag prices (Seongbuk-gu)",bagsTxt:"General waste 5ℓ ₩130 · 10ℓ ₩250 · 20ℓ ₩490 / Food waste 1ℓ ₩100 · 2ℓ ₩190 · 3ℓ ₩300",
+   tip:"Tea bags, eggshells, fruit seeds and bones go in general waste, not food waste.",trashCall:"Cleaning Administration Division",
+   centerT:"Your community center",money:"Money",moneyTxt:"Banks: Mon–Fri 09:00–16:00 · ATMs: all day except 22:00–08:00 · Exchange cash with your passport and keep the receipt to change back.",
+   srcLine:"Source: Seongbuk-gu Office English website (sb.go.kr/en), checked Oct 2026",
+   e119:"Fire · ambulance (free, interpreters in EN/ZH/JA/MN/VI)",e112:"Police",e1588:"Interpretation in 17 languages",hosp:"Large hospital nearby",hospTxt:"Korea University Anam Hospital · 73 Goryeo-daero",
+   medRef:"Seoul Global Center medical referral (English, 24h)",post:"Korea Post call center"},
+ zh:{notListed:"未公布",dayN:["周日","周一","周二","周三","周四","周五","周六"],openNow:"营业中",closedNow:"已关闭",closedSeason:"本季闭馆",noHrs:"未公布时间，出发前请确认",
+   hrsSeason:"（夏冬季时间可能不同）",gilsang:"4–9月 03:30–19:00 · 10–3月 03:30–20:00",closedOn:"休息",source:"城北区厅",other:"其他来源",border:"地址属钟路区 · 城北区边界",
+   tabs2:["节庆","城北区"],thisMonth:"本月",next:"即将举行",later:"其他节庆",onHold:"因修复暂停（2019年信息）— 请先确认",exact:"城北区网站未公布具体日期，出发前请确认。",
+   trashT:"您所在区域的垃圾投放日",trashDays:"{dong}：{days}，18:00–20:00 投放",trashRule:"放在建筑门前，19:00后收集。公休日前一天不要投放（周日除外）。",
+   bags:"垃圾袋价格（城北区）",bagsTxt:"一般垃圾 5ℓ ₩130 · 10ℓ ₩250 · 20ℓ ₩490 / 厨余 1ℓ ₩100 · 2ℓ ₩190 · 3ℓ ₩300",
+   tip:"茶包、蛋壳、果核、骨头属于一般垃圾，不是厨余。",trashCall:"清扫行政科",
+   centerT:"所在洞居民中心",money:"钱",moneyTxt:"银行：周一至周五 09:00–16:00 · ATM：22:00–08:00以外均可 · 凭护照换钱，保留收据以便换回。",
+   srcLine:"来源：城北区厅英文网站（sb.go.kr/en），2026年10月确认",
+   e119:"火警 · 急救（免费，提供英中日蒙越语口译）",e112:"报警",e1588:"17种语言口译",hosp:"附近大型医院",hospTxt:"高丽大学安岩医院 · 高丽大路73",
+   medRef:"首尔全球中心医疗转介（英语，24小时）",post:"韩国邮政客服"},
+ ja:{notListed:"記載なし",dayN:["日","月","火","水","木","金","土"],openNow:"営業中",closedNow:"営業時間外",closedSeason:"今の季節は休館",noHrs:"時間の記載なし。行く前に確認を",
+   hrsSeason:"（夏・冬は時間が変わる場合あり）",gilsang:"4〜9月 03:30–19:00 · 10〜3月 03:30–20:00",closedOn:"休み",source:"城北区庁",other:"その他の出典",border:"住所は鍾路区 · 城北区との境界",
+   tabs2:["お祭り","城北区"],thisMonth:"今月",next:"これから",later:"そのほかのお祭り",onHold:"復元工事のため休止中（2019年時点）— 事前に確認を",exact:"城北区のサイトに正確な日付はありません。行く前に確認してください。",
+   trashT:"あなたの地域のごみの日",trashDays:"{dong}：{days}、18:00–20:00 に出す",trashRule:"建物の前に出してください。収集は19:00以降。祝日の前日は出さないでください（日曜を除く）。",
+   bags:"ごみ袋の値段（城北区）",bagsTxt:"一般ごみ 5ℓ ₩130 · 10ℓ ₩250 · 20ℓ ₩490 / 生ごみ 1ℓ ₩100 · 2ℓ ₩190 · 3ℓ ₩300",
+   tip:"ティーバッグ・卵の殻・果物の種・骨は生ごみではなく一般ごみです。",trashCall:"清掃行政課",
+   centerT:"最寄りの住民センター",money:"お金",moneyTxt:"銀行：月〜金 09:00–16:00 · ATM：22:00–08:00以外 · 両替はパスポートで。再両替用にレシートを保管。",
+   srcLine:"出典：城北区庁 英語サイト（sb.go.kr/en）、2026年10月確認",
+   e119:"火災・救急（無料、英中日・モンゴル語・ベトナム語の通訳）",e112:"警察",e1588:"17言語の通訳",hosp:"近くの大きな病院",hospTxt:"高麗大学校安岩病院 · 高麗大路73",
+   medRef:"ソウルグローバルセンター 医療案内（英語・24時間）",post:"韓国郵便 コールセンター"},
+ ko:{notListed:"미기재",dayN:["일","월","화","수","목","금","토"],openNow:"지금 운영 중",closedNow:"지금 운영 시간 아님",closedSeason:"휴관 기간",noHrs:"운영 시간 미기재 · 가기 전에 확인하세요",
+   hrsSeason:"(하절기·동절기에 달라질 수 있음)",gilsang:"4~9월 03:30–19:00 · 10~3월 03:30–20:00",closedOn:"휴무",source:"성북구청",other:"그 밖의 출처",border:"주소는 종로구 · 성북구 경계",
+   tabs2:["축제","성북구 공식"],thisMonth:"이번 달",next:"다가오는 축제",later:"그 밖의 축제",onHold:"선잠단지 복원으로 중단 (2019년 기준) — 먼저 확인 필요",exact:"성북구청 누리집에 정확한 날짜가 없어요. 가기 전에 확인하세요.",
+   trashT:"내 숙소 지역 쓰레기 배출일",trashDays:"{dong}: {days}, 18:00–20:00에 내놓기",trashRule:"건물 앞에 내놓으세요. 19시 이후 수거합니다. 공휴일 전날은 내놓지 마세요 (일요일 제외).",
+   bags:"종량제 봉투 가격 (성북구)",bagsTxt:"일반 5ℓ 130원 · 10ℓ 250원 · 20ℓ 490원 / 음식물 1ℓ 100원 · 2ℓ 190원 · 3ℓ 300원",
+   tip:"티백, 달걀 껍데기, 과일 씨, 뼈는 음식물이 아니라 일반쓰레기예요.",trashCall:"청소행정과",
+   centerT:"내 지역 주민센터",money:"돈",moneyTxt:"은행 평일 09:00–16:00 · ATM 22:00–08:00 제외 이용 · 환전은 여권 지참, 재환전용 영수증 보관.",
+   srcLine:"출처: 성북구청 영문 누리집 (sb.go.kr/en), 2026년 10월 확인",
+   e119:"화재 · 구급 (무료, 영·중·일·몽골·베트남어 통역)",e112:"경찰",e1588:"17개 언어 통역",hosp:"가까운 큰 병원",hospTxt:"고려대학교 안암병원 · 고려대로 73",
+   medRef:"서울글로벌센터 의료 안내 (영어, 24시간)",post:"우체국 고객센터"}
+};
+
+const T3 = {
+ en:{hyT:"Official guide (original English)",hySrc:"Source: Seoul Museum of History · KOGL Type 4, shown unchanged",
+   menuT:"What's on the menu? Official names for 800 Korean dishes",menuPh:"Search: bibimbap, 불고기, 冷面…",menuNone:"No match.",
+   evLive:"Events in Seongbuk (Seoul Culture Portal)",evKo:"Event names and places are shown in Korean, as in the original data. Lines marked AI translation are machine translations.",ongoing:"On now",free:"Free",paid:"Paid",more:"Details",
+   gen:"General waste",food:"Food waste",rec:"Recyclables",exSat:"Every day except Sat",today:"today",zoneL:"Other area",putOut:"Put out",
+   toiletT:"Nearest public toilets",wifiT:"Nearest free public Wi-Fi",govT:"Government offices near you",policeT:"Nearest police (jigudae · pachulso)",
+   policeNoMap:"Distances appear when the map is on. All police offices around Seongbuk:",call112:"Emergency: call 112 (interpretation available)",
+   jigu:"Police substation",pachul:"Police box",srcData:"Public data used"},
+ zh:{hyT:"官方介绍（英文原文）",hySrc:"来源：首尔历史博物馆 · 公共许可第4类，原文照登",
+   menuT:"菜单上是什么？800道韩餐官方译名",menuPh:"搜索：拌饭、불고기、bulgogi…",menuNone:"没有结果。",
+   evLive:"城北区活动（首尔文化门户）",evKo:"活动名称和地点按原始数据以韩文显示。标有“AI翻译”的是机器翻译。",ongoing:"进行中",free:"免费",paid:"收费",more:"详情",
+   gen:"一般垃圾",food:"厨余",rec:"可回收物",exSat:"周六以外每天",today:"今天",zoneL:"其他区域",putOut:"投放时间",
+   toiletT:"最近的公共厕所",wifiT:"最近的免费公共Wi-Fi",govT:"附近的政府机构",policeT:"最近的警察（地区队 · 派出所）",
+   policeNoMap:"打开地图后显示距离。城北周边全部警察机构：",call112:"紧急情况请拨打112（可提供口译）",
+   jigu:"地区警察队",pachul:"派出所",srcData:"使用的公共数据"},
+ ja:{hyT:"公式案内（英語原文）",hySrc:"出典：ソウル歴史博物館 · 公共ヌリ第4類型、原文のまま",
+   menuT:"メニューの料理は？ 韓国料理800品の公式表記",menuPh:"検索：ビビンバ、불고기、bulgogi…",menuNone:"見つかりません。",
+   evLive:"城北区のイベント（ソウル文化ポータル）",evKo:"イベント名と場所は元データのまま韓国語で表示します。「AI翻訳」は機械翻訳です。",ongoing:"開催中",free:"無料",paid:"有料",more:"詳細",
+   gen:"一般ごみ",food:"生ごみ",rec:"資源ごみ",exSat:"土曜以外毎日",today:"今日",zoneL:"ほかの地域",putOut:"出す時間",
+   toiletT:"最寄りの公衆トイレ",wifiT:"最寄りの無料公共Wi-Fi",govT:"近くの役所・警察",policeT:"最寄りの警察（地区隊 · 交番）",
+   policeNoMap:"地図が表示されると距離が出ます。城北周辺の警察：",call112:"緊急時は112へ（通訳あり）",
+   jigu:"地区隊",pachul:"交番",srcData:"使用した公共データ"},
+ ko:{hyT:"공식 영문 안내 (원문)",hySrc:"출처: 서울역사박물관 · 공공누리 제4유형, 원문 그대로",
+   menuT:"메뉴 이름 찾기 · 한식 800선 공식 외국어 표기",menuPh:"검색: 비빔밥, bulgogi, 冷面…",menuNone:"찾는 메뉴가 없어요.",
+   evLive:"성북구 행사 (서울문화포털)",evKo:"행사 이름 · 장소는 원래 데이터 그대로 한국어로 보여 줍니다.",ongoing:"진행 중",free:"무료",paid:"유료",more:"자세히",
+   gen:"일반쓰레기",food:"음식물",rec:"재활용",exSat:"토요일 빼고 매일",today:"오늘",zoneL:"다른 동 보기",putOut:"배출 시간",
+   toiletT:"가까운 공중화장실",wifiT:"가까운 공공와이파이",govT:"가까운 관공서",policeT:"가까운 지구대 · 파출소",
+   policeNoMap:"지도가 켜지면 거리가 보입니다. 성북 주변 지구대 · 파출소 전체:",call112:"긴급 신고 112 (통역 연결 가능)",
+   jigu:"지구대",pachul:"파출소",srcData:"사용한 공공데이터"}
+};
+const MENU_PICK=["비빔밥","불고기","김치찌개","삼계탕","떡볶이","물냉면","김밥","순두부찌개","삼겹살","해물파전"];
+
+// v3: 숙소 카드 (QR을 찍으면 맨 위에 숙소 위치와 정보)
+const STN={hansung:{lat:37.5884,lng:127.0063,n:{en:"Hansung Univ. Station (Line 4)",zh:"汉城大入口站（4号线）",ja:"漢城大入口駅（4号線）",ko:"4호선 한성대입구역"}}};
+const T4={
+ en:{tab:"My stay",copy:"Copy",copied:"Copied",walkDir:"Walking route",walkT:"about {m} min walk",addr:"Address",stn:"Nearest station",walk:"about {m} min walk",ci:"Check-in",co:"Check-out",tel:"Call your host",wifi:"Wi-Fi",pw:"password",
+   taxi:"Show to taxi driver",dir:"Directions",taxiK:"Please take me here.",close:"Close",demo:"Demo stay: name, address and contacts are made up."},
+ zh:{tab:"我的住宿",copy:"复制",copied:"已复制",walkDir:"步行路线",walkT:"步行约{m}分钟",addr:"地址",stn:"最近的车站",walk:"步行约{m}分钟",ci:"入住",co:"退房",tel:"联系房东",wifi:"Wi-Fi",pw:"密码",
+   taxi:"给出租车司机看",dir:"路线",taxiK:"请送我到这里。",close:"关闭",demo:"演示用住宿：名称、地址和联系方式均为虚构。"},
+ ja:{tab:"宿泊先",copy:"コピー",copied:"コピーしました",walkDir:"徒歩ルート",walkT:"徒歩約{m}分",addr:"住所",stn:"最寄り駅",walk:"徒歩約{m}分",ci:"チェックイン",co:"チェックアウト",tel:"ホストに電話",wifi:"Wi-Fi",pw:"パスワード",
+   taxi:"タクシーの運転手に見せる",dir:"道順",taxiK:"ここまでお願いします。",close:"閉じる",demo:"デモ用の宿泊先です。名前・住所・連絡先は架空です。"},
+ ko:{tab:"내 숙소",copy:"복사",copied:"복사됨",walkDir:"걸어가는 길",walkT:"걸어서 약 {m}분",addr:"주소",stn:"가까운 역",walk:"걸어서 약 {m}분",ci:"체크인",co:"체크아웃",tel:"숙소 전화",wifi:"와이파이",pw:"비밀번호",
+   taxi:"택시 기사에게 보여 주기",dir:"길찾기",taxiK:"여기로 가 주세요.",close:"닫기",demo:"시연용 숙소예요. 이름 · 주소 · 연락처는 지어낸 값이에요."}
+};
+// 카카오맵 도보 길찾기: 숙소 → 장소 (카카오맵 앱/웹이 열림)
+function walkUrl(name,lat,lng){const st=STAYS[S.stay],from=STAYS[S.stay].info?st.name.ko:"성북구청";
+  return "https://map.kakao.com/link/by/walk/"+encodeURIComponent(from)+","+st.lat+","+st.lng+"/"+encodeURIComponent(name)+","+lat+","+lng;}
+const T6={
+ en:{bus:"Bus · subway",gT:"Getting around",gStn:"Nearest subway",gTap:"Tap your card when you get on AND off the bus — transfers are then discounted.",
+  pWhere:"Buy at: subway station service desks, convenience stores near stations, Myeongdong Tourist Information Center. Card itself ₩3,000.",
+  pCard:"From 17 Mar 2026, the new ticket machines at 273 stations on Lines 1–8 accept Visa · Mastercard and Kakao Pay · Naver Pay (about 3.7% fee).",
+  pNot:"Not valid on: some private railways, Gyeonggi-do buses and express buses. At Incheon Airport you can get off, but not get on.",
+  pPrice:"Prices from a 2024 Seoul notice — please check at the station.",pSrc:"Source: Seoul Metropolitan Government (2024-10-08, 2026-03-16)",
+  myAddr:"My stay address (show to a taxi driver)"},
+ zh:{bus:"公交·地铁",gT:"出行方式",gStn:"最近的地铁站",gTap:"乘坐公交车时，上车和下车都要刷卡，这样换乘才有优惠。",
+  pWhere:"购买地点：地铁站客服中心、车站附近便利店、明洞旅游咨询中心。卡费另需 ₩3,000。",
+  pCard:"自2026年3月17日起，1~8号线273个车站的新型售票机可使用 Visa · Mastercard 及 Kakao Pay · Naver Pay（约3.7%手续费）。",
+  pNot:"不可使用：部分民营铁路、京畿道公交和广域巴士。仁川机场只能下车，不能上车。",
+  pPrice:"价格来自首尔市2024年公告，请在车站确认。",pSrc:"来源：首尔特别市（2024-10-08，2026-03-16）",
+  myAddr:"我的住宿地址（给出租车司机看）"},
+ ja:{bus:"バス・地下鉄",gT:"移動のしかた",gStn:"最寄りの地下鉄駅",gTap:"バスは乗るときと降りるときの両方でカードをタッチすると、乗り換えが割引になります。",
+  pWhere:"購入場所：地下鉄駅の駅務室、駅近くのコンビニ、明洞観光情報センター。カード代 ₩3,000 は別。",
+  pCard:"2026年3月17日から、1～8号線273駅の新しい券売機で Visa・Mastercard、Kakao Pay・Naver Pay が使えます（手数料 約3.7%）。",
+  pNot:"使えない所：一部の民間鉄道、京畿道の市内バス・広域バス。仁川空港では降りられますが、乗れません。",
+  pPrice:"料金はソウル市の2024年のお知らせによります。駅で確認してください。",pSrc:"出典：ソウル特別市（2024-10-08、2026-03-16）",
+  myAddr:"宿泊先の住所（タクシーの運転手に見せる）"},
+ ko:{bus:"버스·지하철",gT:"이동 방법",gStn:"가까운 지하철역",gTap:"버스는 탈 때와 내릴 때 모두 카드를 대야 환승 할인이 됩니다.",
+  pWhere:"사는 곳: 지하철 고객안전실, 역 근처 편의점, 명동관광정보센터. 카드값 3,000원 따로.",
+  pCard:"2026년 3월 17일부터 1~8호선 273개 역 새 발매기에서 해외 비자 · 마스터카드, 카카오페이 · 네이버페이로 살 수 있어요 (이용료 약 3.7%).",
+  pNot:"못 쓰는 곳: 일부 민자철도, 경기도 시내 · 광역버스. 인천공항은 내릴 수만 있고 탈 수는 없어요.",
+  pPrice:"가격은 서울시 2024년 안내 기준이에요. 역에서 확인하세요.",pSrc:"출처: 서울특별시 (2024-10-08, 2026-03-16)",
+  myAddr:"내 숙소 주소 (택시 기사에게 보여 주기)"}
+};
+// 버스 · 지하철 타는 법 (그림: public/guide/*.png — 없으면 글만 보임)
+const RIDE={
+ en:{t:"How to ride",g:[["Get a card",[["card1","Buy a transport card (T-money) at a convenience store. The card costs ₩3,000; top it up with cash at the counter."],["card2","Or use the ticket machine at a subway station: choose your language, then the Climate Card short-term pass or a single-journey ticket. New machines at 273 stations accept overseas Visa · Mastercard."]]],
+  ["Subway",[["sub1","Tap your card on the gate reader to go in."],["sub2","Check the line colour and the direction (the next station's name) before going down to the platform. Wait behind the yellow line / screen doors."],["sub3","To change lines, follow the coloured line signs inside the station. You don't need to tap out."],["sub4","Tap your card again at the gate when you leave. Single-journey ticket: put it into the deposit refund machine to get ₩500 back."],["gate1","If your card doesn't work or anything goes wrong: go to the wide gate (wheelchair sign). It has a staff call button.",1],["gate2","Press the call button and speak to the station staff through the speaker. If language is hard, call 1330 (Korea Travel Helpline) for interpretation.",1]]],
+  ["Bus",[["bus1","Check the bus number at the stop. Get on at the front door and tap your card."],["bus2","Press the red stop button before your stop. Tap your card at the back door and get off."]]]],
+  tr:"Transfers are discounted when you tap off and board the next bus or subway within 30 minutes (1 hour from 21:00 to 07:00), up to 4 times.",
+  src:"Source: Visit Seoul (Seoul Tourism Organization), Seoul Metropolitan Government"},
+ zh:{t:"乘车方法",g:[["准备交通卡",[["card1","在便利店购买交通卡（T-money）。卡费 ₩3,000，可在柜台用现金充值。"],["card2","也可以在地铁站售票机选择语言后，购买气候同行卡短期券或单程票。273个车站的新型售票机可用海外 Visa · Mastercard。"]]],
+  ["地铁",[["sub1","在闸机读卡器上刷卡进站。"],["sub2","下到站台前，先确认线路颜色和方向（下一站站名）。在黄线 / 屏蔽门后等车。"],["sub3","换乘时跟着站内的线路颜色标志走，不需要出站刷卡。"],["sub4","出站时再在闸机刷卡。单程票请投入押金退还机，可退回 ₩500。"],["gate1","刷卡失败或遇到其他问题时：请到有轮椅标志的宽闸机，那里有呼叫站务员按钮。",1],["gate2","按下呼叫按钮，对着扬声器与站务员通话。语言不通时可拨打1330（旅游咨询热线）请求翻译。",1]]],
+  ["公交",[["bus1","在车站确认公交车号码，从前门上车并刷卡。"],["bus2","到站前按红色下车铃，在后门刷卡后下车。"]]]],
+  tr:"下车刷卡后30分钟内（21:00~07:00为1小时内）换乘公交或地铁可享优惠，最多4次。",
+  src:"来源：Visit Seoul（首尔观光财团）、首尔特别市"},
+ ja:{t:"乗り方",g:[["カードを用意",[["card1","コンビニで交通カード（T-money）を買います。カード代 ₩3,000、チャージはレジで現金で。"],["card2","地下鉄駅の券売機で言語を選び、気候同行カード短期券か1回用交通カードを買うこともできます。273駅の新しい券売機は海外の Visa・Mastercard に対応。"]]],
+  ["地下鉄",[["sub1","改札の読み取り機にカードをタッチして入ります。"],["sub2","ホームに下りる前に、路線の色と方向（次の駅名）を確かめます。黄色い線・ホームドアの内側で待ちます。"],["sub3","乗り換えは駅の中の路線の色の案内に従います。改札を出る必要はありません。"],["sub4","出るときも改札でタッチ。1回用交通カードは保証金払戻機に入れると ₩500 戻ります。"],["gate1","カードが反応しない・困ったときは：車いすマークのある幅の広い改札へ。駅員呼び出しボタンがあります。",1],["gate2","呼び出しボタンを押し、スピーカーに向かって駅員と話します。言葉が難しいときは1330（観光通訳案内）に電話すると通訳してもらえます。",1]]],
+  ["バス",[["bus1","停留所でバスの番号を確かめ、前のドアから乗ってカードをタッチ。"],["bus2","降りる前に赤い降車ボタンを押し、後ろのドアでカードをタッチして降ります。"]]]],
+  tr:"降りるときにタッチし、30分以内（21:00～07:00は1時間以内）に次のバス・地下鉄に乗ると乗り換え割引、4回まで。",
+  src:"出典：Visit Seoul（ソウル観光財団）、ソウル特別市"},
+ ko:{t:"타는 방법",g:[["교통카드 준비",[["card1","편의점에서 교통카드(티머니)를 사요. 카드값 3,000원, 충전은 계산대에서 현금으로."],["card2","지하철역 발매기에서 언어를 고른 뒤 기후동행카드 단기권이나 1회용 교통카드를 살 수도 있어요. 273개 역 새 발매기는 해외 비자 · 마스터카드도 돼요."]]],
+  ["지하철",[["sub1","개찰구 단말기에 카드를 대고 들어가요."],["sub2","승강장으로 내려가기 전에 노선 색과 방향(다음 역 이름)을 확인해요. 노란 선 · 스크린도어 뒤에서 기다려요."],["sub3","갈아탈 때는 역 안의 노선 색 표지를 따라가요. 개찰구를 나갈 필요 없어요."],["sub4","나갈 때도 개찰구에 카드를 대요. 1회용 교통카드는 보증금 환급기에 넣으면 500원을 돌려받아요."],["gate1","카드가 안 찍히거나 문제가 생기면: 휠체어 표시가 있는 넓은 개찰구로 가세요. 역무원 호출 버튼이 있어요.",1],["gate2","호출 버튼을 누르고 스피커에 대고 역무원과 이야기해요. 말이 잘 안 통하면 1330(관광통역안내)에 전화해 통역을 받을 수 있어요.",1]]],
+  ["버스",[["bus1","정류장에서 버스 번호를 확인하고 앞문으로 타며 카드를 대요."],["bus2","내리기 전에 빨간 하차 벨을 누르고, 뒷문에서 카드를 대고 내려요."]]]],
+  tr:"내릴 때 카드를 대고 30분 안에(21시~7시는 1시간 안에) 다음 버스 · 지하철을 타면 환승 할인, 4번까지.",
+  src:"출처: Visit Seoul(서울관광재단), 서울특별시"}
+};
+const RIDEOPEN=[true,false,false];   // 목록을 다시 그려도 펼친 상태 유지
+function rideHtml(){const r=RIDE[S.lang];
+  return `<div class="blk ride"><h3>${esc(r.t)}</h3>`+r.g.map(([h,steps],gi)=>`<details${RIDEOPEN[gi]?" open":""} ontoggle="RIDEOPEN[${gi}]=this.open"><summary>${esc(h)}</summary><ol>`+
+    steps.map(([img,txt,tip])=>`<li${tip?' class="tip"':""}><img src="guide/${img}.png" alt="" loading="lazy" onerror="this.remove()"><span>${esc(txt)}</span></li>`).join("")+`</ol></details>`).join("")+
+    `<p class="note">${esc(r.tr)}</p><p class="srcl">${esc(r.src)}</p></div>`;}
+// 카카오맵 대중교통 길찾기: 숙소 → 장소
+function busUrl(name,lat,lng){return walkUrl(name,lat,lng).replace("/link/by/walk/","/link/by/traffic/");}
+function walkLink(name,lat,lng){return `<a class="walk" href="${walkUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T4[S.lang].walkDir)}</a><a class="walk" href="${busUrl(name,lat,lng)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(T6[S.lang].bus)}</a>`;}
+const walkMin=d=>Math.max(1,Math.round(d*1.5*1000/80));   // 직선거리 × 1.5, 분속 80m (카카오맵 도보 결과와 비슷하게 맞춤)
+function stayHtml(){
+  const st=STAYS[S.stay],u=T4[S.lang];
+  if(!st.info)return "";
+  const i=st.info,stn=STN[i.stn],mins=Math.max(1,walkMin(km(st,stn)));
+  const addr=S.lang==="ko"?i.addrKo:i.addrEn;
+  const dir="https://map.kakao.com/link/to/"+encodeURIComponent(st.name.ko)+","+st.lat+","+st.lng;
+  return `<dl class="facts">
+      <dt>${esc(u.addr)}</dt><dd>${esc(addr)}${S.lang==="ko"?"":`<span class="ko-addr">${esc(i.addrKo)}</span>`}</dd>
+      <dt>${esc(u.stn)}</dt><dd>${esc(stn.n[S.lang])}, ${esc(u.walk.replace("{m}",mins))}</dd>
+      <dt>${esc(u.ci)} / ${esc(u.co)}</dt><dd class="num">${i.checkIn} / ${i.checkOut}</dd>
+      <dt>${esc(u.wifi)}</dt><dd><span class="num">${esc(i.wifi)}</span> <span class="pw">${esc(u.pw)} <span class="num">${esc(i.wifiPw)}</span></span> <button type="button" class="copy" onclick="copyText(this,'${esc(i.wifiPw)}')">${esc(u.copy)}</button></dd>
+      <dt>${esc(u.tel)}</dt><dd><a class="num" href="tel:${i.tel.replace(/-/g,"")}">${i.tel}</a></dd>
+    </dl>
+    <div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(u.taxi)}</button><a class="act-sub" href="${dir}" target="_blank" rel="noopener">${esc(u.dir)}</a></div>
+    <p class="demo-note">${esc(u.demo)}</p>`;
+}
+function openTaxi(){
+  const st=STAYS[S.stay],u=T4[S.lang];if(!st.info)return;
+  document.getElementById("taxiK").textContent=u.taxiK+(S.lang==="ko"?"":" 여기로 가 주세요.");
+  document.getElementById("taxiName").textContent=st.name.ko;
+  document.getElementById("taxiAddr").textContent=st.info.addrKo;
+  const x=document.getElementById("taxiX");x.textContent=u.close;
+  document.getElementById("taxi").hidden=false;x.focus();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("taxi").hidden=true;});
+
+// ---------- 한글 → 로마자 (국어의 로마자 표기법 기본 규칙, 이름 읽기 도움용) ----------
+const RR_I=["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+const RR_V=["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
+const RR_F=["","k","k","k","n","n","n","t","l","k","m","l","l","l","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
+const RR_FL=["","g","kk","gs","n","nj","nh","d","r","lg","lm","lb","ls","lt","lp","lh","m","b","bs","s","ss","ng","j","ch","k","t","p","h"];
+function roman(str){
+  const cs=[...String(str)];let out="";
+  cs.forEach((c,i)=>{const k=c.charCodeAt(0)-0xAC00;
+    if(k<0||k>11171){out+=c;return;}
+    const ini=Math.floor(k/588),med=Math.floor(k%588/28),fin=k%28;
+    const nx=(cs[i+1]||"").charCodeAt(0)-0xAC00,nIni=nx>=0&&nx<=11171?Math.floor(nx/588):-1;
+    let f=RR_F[fin];
+    if(fin&&nIni===11)f=RR_FL[fin];            // 받침 + ㅇ: 다음 글자로 넘겨 읽음
+    else if(fin===8&&nIni===5)f="l";            // ㄹ + ㄹ → ll
+    const pk=i>0?cs[i-1].charCodeAt(0)-0xAC00:-1,pf=pk>=0&&pk<=11171?pk%28:0;
+    let ini_s=RR_I[ini];if(ini===5&&pf)ini_s=RR_F[pf]==="l"?"l":"n";   // 받침 뒤 ㄹ: ㄹ이면 l, 그 밖은 n (정릉 → Jeongneung)
+    out+=ini_s+RR_V[med]+f;});
+  return out.replace(/(^|\s|\()([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+}
+// 동 이름: 삼선동 → Samseon-dong, 성북동1가 → Seongbuk-dong 1-ga
+function romanDong(d){const m=String(d).match(/^(.+?)(동)(\d+)?(가)?$/);return m?roman(m[1])+"-dong"+(m[3]?" "+m[3]+(m[4]?"-ga":""):""):roman(d);}
+const showKo=()=>S.lang==="ko";
+// 이름 규칙 번역 (지구대 · 파출소 · 경찰서 · 주민센터) — 앞부분은 로마자, 뒷부분은 기관 종류만 번역
+const KIND={en:{jigu:"Police Substation",pachul:"Police Box",station:"Police Station",center:"Community Service Center"},
+  zh:{jigu:"地区警察队",pachul:"派出所",station:"警察署",center:"居民中心"},ja:{jigu:"地区隊",pachul:"交番",station:"警察署",center:"住民センター"}};
+// 길 이름은 붙임표: 대학로 → Daehak-ro, ○○길 → ○○-gil, ○○동 → ○○-dong
+const romanPlace=x=>/로$/.test(x)&&x.length>1?roman(x.slice(0,-1))+"-ro":/길$/.test(x)&&x.length>1?roman(x.slice(0,-1))+"-gil":/동\d*$/.test(x)?romanDong(x):roman(x);
+function trPolice(n){if(showKo())return n;const m=String(n).match(/^(.+?)(지구대|파출소)$/);if(!m)return roman(n);
+  return romanPlace(m[1])+" "+KIND[S.lang][m[2]==="지구대"?"jigu":"pachul"];}
+function trStation(n){if(showKo())return n;const m=String(n).match(/^(.+?)경찰서$/);return m?roman(m[1])+" "+KIND[S.lang].station:roman(n);}
+function trCenter(n,dong){if(showKo())return n;const base=dong||String(n).replace(/ ?주민센터$/,"");return romanDong(base)+" "+KIND[S.lang].center;}
+// 화장실 개방 시간: 자주 나오는 말만 규칙 번역, 시각 · 숫자는 그대로
+const OPENW={en:{"상시":"Always open","24시간":"24 hours","정시":"Set hours","영업시작~종료":"business hours","평일만":"weekdays only","평일":"weekdays","주말":"weekends","토요일":"Sat","일요일":"Sun","기타":"Other","월":"","~":"–"},
+  zh:{"상시":"全天开放","24시간":"24小时","정시":"定时","영업시작~종료":"营业时间内","평일만":"仅工作日","평일":"工作日","주말":"周末","토요일":"周六","일요일":"周日","기타":"其他","월":"月","~":"–"},
+  ja:{"상시":"常時開放","24시간":"24時間","정시":"定時","영업시작~종료":"営業時間内","평일만":"平日のみ","평일":"平日","주말":"週末","토요일":"土曜","일요일":"日曜","기타":"その他","월":"月","~":"–"}};
+function trOpen(o){if(showKo()||!o)return o;const w=OPENW[S.lang];let x=String(o).replace(/\|/g," ").replace(/\s+/g," ").trim();
+  ["영업시작~종료","24시간","평일만","상시","정시","평일","주말","토요일","일요일","기타"].forEach(k=>{x=x.split(k).join(w[k]);});
+  x=x.replace(/(\d+)월/g,S.lang==="en"?(m,a)=>["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+a]||a:"$1"+w["월"]);
+  return x.replace(/~/g,"–").replace(/([A-Za-z\u4e00-\u9fff\u3040-\u30ff])(\d)/g,"$1 $2").replace(/([a-z])\(/g,"$1 (").replace(/,(?=\S)/g,", ").replace(/^,|,$/g,"").trim();}
+// 화장실 · 와이파이 이름: 원래 이름 + 로마자 (작게)
+const withRoman=n=>showKo()||!/[가-힣]/.test(n)?esc(n):`${esc(n)} <span class="orig">${esc(roman(n))}</span>`;
+// AI 짧은 번역: 화면에 나온 이름만 모아서 한 번에 요청, 결과는 언어별로 저장
+const TR={},TRQ={};
+// 잘 바뀌지 않는 이름은 미리 번역해 둔다 (실시간 AI는 매일 바뀌는 문화행사만). 가게 설명은 이름에 드러난 것만.
+const TRFIX={shop:{
+ en:{"선동보리밥":"Seondong Boribap (barley rice)","나폴레옹과자점":"Napoleon Bakery","㈜대신제과":"Daesin Bakery","태조감자국":"Taejo Gamjaguk (pork bone and potato soup)",
+     "청수장":"Cheongsujang","옛날중국집":"Yetnal Junggukjip (old-style Chinese restaurant)","대원서점":"Daewon Bookstore"},
+ zh:{"선동보리밥":"仙洞大麦饭","나폴레옹과자점":"拿破仑面包店","㈜대신제과":"大信制果（面包糕点）","태조감자국":"太祖土豆汤（猪骨土豆汤）",
+     "청수장":"清水庄","옛날중국집":"老式中餐馆","대원서점":"大元书店"},
+ ja:{"선동보리밥":"ソンドン・ポリバプ（麦ごはん）","나폴레옹과자점":"ナポレオン菓子店（ベーカリー）","㈜대신제과":"大信製菓（パン・菓子）","태조감자국":"テジョ・カムジャクク（豚骨とじゃがいものスープ）",
+     "청수장":"チョンスジャン","옛날중국집":"昔ながらの中華料理店","대원서점":"テウォン書店"}}};
+function trText(kind,t){if(showKo())return "";const fx=TRFIX[kind]&&TRFIX[kind][S.lang];if(fx&&fx[t])return fx[t];
+  const k=S.lang+"|"+kind;TR[k]=TR[k]||{};if(t in TR[k])return TR[k][t];
+  (TRQ[k]=TRQ[k]||new Set()).add(t);clearTimeout(trText.timer);trText.timer=setTimeout(flushTr,60);return "";}
+function flushTr(){
+  Object.entries(TRQ).forEach(([k,set])=>{const [lang,kind]=k.split("|"),list=[...set];delete TRQ[k];if(!list.length)return;
+    list.forEach(t=>TR[k][t]=TR[k][t]??"");
+    const qs=list.map(t=>"t="+encodeURIComponent(t)).join("&");
+    apiGet(`/api/translate?lang=${lang}&kind=${kind}&${qs}`).then(j=>{if(j&&j.ok){Object.assign(TR[k],j.items);if(S.lang===lang)renderList();}});});
+}
+const aiLine=(kind,t)=>{const v=trText(kind,t);return v?`<span class="ai">${esc(v)} <i>${esc(T5[S.lang].ai)}</i></span>`:"";};
+function copyText(btn,txt){
+  const done=()=>{const o=btn.textContent;btn.textContent=T4[S.lang].copied;setTimeout(()=>btn.textContent=o,1500);};
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(done).catch(done);
+  else{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}ta.remove();done();}
+}
+
+// ---------- 새 API (team3_project/api) ----------
+const T5={
+ en:{kto:"Official tourism info nearby",ai:"AI translation",more:"Details",ktoSrc:"Source: Korea Tourism Organization",kind:{spot:"Sight",culture:"Culture",festival:"Festival",food:"Food",shop:"Shopping"},
+   cent:"Century-old shops (Baengnyeon Gage)",centSrc:"Source: SEMAS century-old shop list",bag:"Shops selling garbage bags in your area",center:"Nearest community center",loading:"Loading…"},
+ zh:{kto:"附近的官方旅游信息",ai:"AI翻译",more:"详情",ktoSrc:"来源：韩国观光公社",kind:{spot:"景点",culture:"文化",festival:"节庆",food:"美食",shop:"购物"},
+   cent:"百年老店（백년가게）",centSrc:"来源：小商工人市场振兴公团 百年老店名单",bag:"所在区域可买垃圾袋的商店",center:"最近的居民中心",loading:"加载中…"},
+ ja:{kto:"近くの公式観光情報",ai:"AI翻訳",more:"詳しく",ktoSrc:"出典：韓国観光公社",kind:{spot:"観光地",culture:"文化",festival:"祭り",food:"グルメ",shop:"ショッピング"},
+   cent:"百年店舗（ペンニョンカゲ）",centSrc:"出典：小商工人市場振興公団 百年店舗リスト",bag:"ごみ袋を売っているお店（この地域）",center:"最寄りの住民センター",loading:"読み込み中…"},
+ ko:{kto:"가까운 관광공사 공식 관광정보",ai:"AI 번역",more:"자세히",ktoSrc:"출처: 한국관광공사 관광정보서비스",kind:{spot:"관광지",culture:"문화시설",festival:"축제",food:"음식점",shop:"쇼핑"},
+   cent:"백년가게",centSrc:"출처: 소상공인시장진흥공단 백년가게 지정리스트",bag:"우리 동 종량제 봉투 파는 곳",center:"가장 가까운 주민센터",loading:"불러오는 중…"}
+};
+const API={tour:{},cent:null,center:null,bag:null};
+const apiGet=u=>fetch(u).then(r=>r.json()).catch(()=>({ok:false}));
+// 관광공사: 화면 언어 · 숙소가 바뀔 때마다 숙소 반경 2km
+function loadTour(){
+  const st=STAYS[S.stay],k=S.lang+":"+S.stay;if(API.tour[k])return;API.tour[k]={loading:true};
+  apiGet(`/api/tour?lang=${S.lang}&lat=${st.lat}&lng=${st.lng}`).then(j=>{API.tour[k]=j;if(S.tab===0)renderList();if(S.tab===0)drawMarkers();});
+}
+function tourItems(){const j=API.tour[S.lang+":"+S.stay];return j&&j.ok?j.items.filter(x=>x.kind!=="food"):[];}
+function tourHtml(){
+  const j=API.tour[S.lang+":"+S.stay],u5=T5[S.lang],st=STAYS[S.stay];
+  if(!j)return "";if(j.loading)return `<p class="sec">${esc(u5.kto)}</p><p class="note">${esc(u5.loading)}</p>`;
+  const items=tourItems();if(!items.length)return "";
+  return `<p class="sec">${esc(u5.kto)}</p>`+items.slice(0,12).map((x,i)=>`<div class="item" onclick="tourGo(${i})">
+      <span class="no" style="background:var(--giwa-2)">${i+1}</span><h3>${esc(x.title)}</h3><span class="d">${fmt(km(st,x))}</span>
+      <div class="meta"><span class="chip">${esc(u5.kind[x.kind]||"")}</span>${esc(x.addr)}</div>
+      <div class="hrs">${walkLink(x.title,x.lat,x.lng)}</div></div>`).join("")+`<p class="srcl">${esc(u5.ktoSrc)}</p>`;
+}
+// 백년가게: 주소 → 카카오 주소 검색으로 위치
+function loadCent(){
+  if(API.cent)return;API.cent={loading:true};
+  apiGet("/api/data?set=baengnyeon").then(j=>{API.cent=j;geocodeCent();if(S.tab===1)renderList();});
+}
+function geocodeCent(){
+  const j=API.cent;if(!j||!j.ok||!map||j.geo)return;j.geo=true;
+  const gc=new kakao.maps.services.Geocoder(),OK=kakao.maps.services.Status.OK;let left=j.rows.length;
+  j.rows.forEach(c=>{const m=(c["업체주소"]||"").match(/^.*?(?:로|길)\s?\d+(?:-\d+)?/);
+    gc.addressSearch(m?m[0]:c["업체주소"],(r,s)=>{if(s===OK&&r[0]){c.lat=+r[0].y;c.lng=+r[0].x;}if(--left===0&&S.tab===1){renderList();drawMarkers();}});});
+}
+function tourGo(i){const x=tourItems()[i];if(x)showRoute(x.lat,x.lng,x.title);}
+function centGo(k){const c=(API.centSorted||[])[k];if(c&&c.lat)showRoute(c.lat,c.lng,c["업체명"]);}
+function centHtml(){
+  const j=API.cent,u5=T5[S.lang],st=STAYS[S.stay];
+  if(!j||!j.ok||!j.rows.length)return "";
+  const rows=j.rows.map(c=>({...c,d:c.lat?km(st,c):null})).sort((a,b)=>(a.d??99)-(b.d??99));
+  API.centSorted=rows;
+  return `<p class="sec">${esc(u5.cent)}</p>`+rows.map((c,k)=>`<div class="item"${c.lat?` onclick="centGo(${k})"`:""}>
+      <span class="no" style="background:var(--food)">百</span><h3>${esc(c["업체명"])}${showKo()?"":`<span class="orig">${esc(roman(c["업체명"].replace(/^㈜/,"")))}</span>`}</h3><span class="d">${c.d!=null?fmt(c.d):""}</span>
+      ${aiLine("shop",c["업체명"])}<div class="addr">${esc(c["업체주소"])}</div>${c.lat?`<div class="hrs">${walkLink(c["업체명"],c.lat,c.lng)}</div>`:""}</div>`).join("")+`<p class="srcl">${esc(u5.centSrc)}</p>`;
+}
+// 주민센터(좌표 있음) · 봉투 판매소(우리 동)
+function loadLife(){
+  if(!API.center){API.center={loading:true};apiGet("/api/data?set=center").then(j=>{API.center=j;if(S.tab===3)renderList();});}
+  if(!API.bag){API.bag={loading:true};apiGet("/api/data?set=bagshop").then(j=>{API.bag=j;if(S.tab===3)renderList();});}
+}
+function centerHtml(){
+  const j=API.center,u5=T5[S.lang],st=STAYS[S.stay];if(!j||!j.ok)return "";
+  const c=j.rows.filter(x=>x["위도"]).map(x=>({...x,lat:+x["위도"],lng:+x["경도"]})).map(x=>({...x,d:km(st,x)})).sort((a,b)=>a.d-b.d)[0];
+  if(!c)return "";
+  return `<div class="near"><span><b>${esc(u5.center)}</b> ${showKo()?esc(c["주민센터명"]):`${esc(trCenter(c["주민센터명"],c["행정동"]))} <span class="orig">${esc(c["주민센터명"])}</span>`}<small>${esc(c["주소"])} · ☎ ${esc(c["전화번호"]||"")} ${walkLink(c["주민센터명"],c.lat,c.lng)}</small></span><span>${fmt(c.d)}</span></div>`;
+}
+function bagHtml(){
+  const j=API.bag,u5=T5[S.lang];if(!j||!j.ok)return "";
+  const dong=S.stay==="B"?"성북동":"삼선동";
+  const rows=j.rows.filter(x=>(x["동이름"]||"").includes(dong)).slice(0,6);if(!rows.length)return "";
+  return `<p class="sec" style="margin-left:0">${esc(u5.bag)} (${esc(showKo()?dong:romanDong(dong))})</p>`+rows.map(x=>`<div class="near"><span>${esc(x["판매소명"])}<small>${esc(x["주소"])}</small></span><span></span></div>`).join("");
+}
+
+// 지금 운영 중인지 (기기 시계 기준)
+function openState(s,now=new Date()){
+  const t=T2[S.lang],day=now.getDay(),mon=now.getMonth()+1,cur=now.getHours()*60+now.getMinutes(),mm=x=>{const[a,b]=x.split(":");return +a*60+ +b;};
+  if(!s.hrs)return {cls:"",txt:t.noHrs,line:""};
+  if(s.hrs==="gilsangsa"){const sum=mon>=4&&mon<=9,o=mm("03:30"),c=mm(sum?"19:00":"20:00");return {cls:cur>=o&&cur<c?"in":"ext",txt:cur>=o&&cur<c?t.openNow:t.closedNow,line:t.gilsang};}
+  const line=hrsLine(s);
+  if(s.closedMonths&&s.closedMonths.includes(mon))return {cls:"ext",txt:t.closedSeason,line};
+  const h=s.hrs[day];
+  if(!h)return s.closedExplicit?{cls:"ext",txt:t.closedNow,line}:{cls:"",txt:t.noHrs,line};
+  const ok=cur>=mm(h[0])&&cur<mm(h[1]);
+  return {cls:ok?"in":"ext",txt:ok?t.openNow:t.closedNow,line};
+}
+function hrsLine(s){
+  const t=T2[S.lang],groups={};
+  [1,2,3,4,5,6,0].forEach(d=>{const h=s.hrs[d];const k=h?h.join("–"):"x";(groups[k]=groups[k]||[]).push(d);});
+  const parts=Object.entries(groups).map(([k,ds])=>{const lab=ds.length===7?"":(ds.length>2?t.dayN[ds[0]]+"–"+t.dayN[ds[ds.length-1]]:ds.map(d=>t.dayN[d]).join("·"))+" ";return k==="x"?lab+(s.closedExplicit?t.closedOn:t.notListed):lab+k;});
+  return parts.join(" · ")+(s.hrsNote==="season"?" "+t.hrsSeason:"");
+}
+
+const FOOD = [
+  {ko:"나폴레옹과자점",q:"나폴레옹과자점 성북",lat:37.5893,lng:127.0041,n:{en:"Napoleon Bakery",zh:"拿破仑面包店",ja:"ナポレオン菓子店"},k:{en:"Bakery",zh:"面包店",ja:"ベーカリー",ko:"제과점"}},
+  {ko:"봉화묵집",q:"봉화묵집",lat:37.5911,lng:127.0021,n:{en:"Bonghwa Mukjip",zh:"烽火凉粉店",ja:"ポンファ ムクチプ"},k:{en:"Korean acorn jelly dishes",zh:"韩式橡子凉粉",ja:"どんぐりムク料理",ko:"묵 요리"}},
+  {ko:"보헤미안커피하우스",q:"보헤미안 커피 안암",lat:37.5868,lng:127.0296,n:{en:"Bohemian Coffee House",zh:"波西米亚咖啡馆",ja:"ボヘミアン コーヒーハウス"},k:{en:"Hand-drip coffee",zh:"手冲咖啡",ja:"ハンドドリップ珈琲",ko:"핸드드립 커피"}}
+];
+
+const T = {
+ en:{tag:"Seongbuk travel & living guide",stayK:"Your stay",via:{A:"QR from booking message",B:"QR in your room",G:"QR on Seongbuk-gu website"},
+  tabs:[["Places","Nearby"],["Food","Long-run shops"],["Events","This week"],["Living","Trash · help"],["Help","Call"]],
+  good:["Good air today","No rain expected. Enjoy outdoor places."],rain:["Rain expected today","Take an umbrella. Indoor places are listed first."],dust:["Fine dust is bad today","Please wear a mask. Indoor places are listed first."],
+  src:"Air Korea · Korea Meteorological Administration (demo values)",indoor:"Indoor",outdoor:"Outdoor",outside:"Outside Seongbuk-gu",
+  whyRain:"It may rain today, so we recommend indoor places.",whyDust:"The air is bad today, so we recommend indoor places.",
+  orae:"Seoul Oraegage",foodNote:"Century-old shops (Baengnyeon Gage) will be added from the national list.",
+  events:[["Seongbuk Night Walk (example)","This weekend · Seongbuk-dong","Free"],["Hanok Craft Class (example)","Sat 14:00 · Seongbuk-dong","Fee"]],evNote:"Real events come from Seoul Culture Events data (date, place, fee).",
+  trash:"Garbage day",trashA:"Mon · Wed · Fri, 18:00–20:00",trashB:"Tue · Thu · Sun, 18:00–20:00",trashWhere:"Put it in front of your building.",
+  trashHow:"General waste: volume-rate bag (sold at convenience stores). Recyclables: clear bag, separately. Food waste: food-waste bag.",
+  cs:"Nearest convenience stores (garbage bags)",pm:"Nearest pharmacies",office:"Community center",police:"Police box",live:"live · Kakao Map",nomap:"Shown when the map is available.",
+  transit:"Bus & subway",transitTxt:"Line 4 · Hansung Univ. Station. Tap your card when getting on and off for free transfers.",
+  pass:"Climate Card short-term pass",passTxt:"1 day ₩5,000 · 2 days ₩8,000 · 3 days ₩10,000 · 5 days ₩15,000 · 7 days ₩20,000",
+  h1:"Korea Travel Helpline (24h, many languages)",h2:"Seoul Dasan Call Center",h3:"Seongbuk-gu English website",h4:"Visit Seoul",
+  install:"Install app",installTip:"Open the browser menu and choose “Add to Home Screen”.",demo:"demo",
+  foot:"Names, addresses and times are shown as in the original data. No location or contact info is collected.",
+  mapLoading:"Loading Kakao Map…",mapNoKey:"The map is unavailable right now. Lists still work.",mapFail:"The map could not load. Lists still work."},
+ zh:{tag:"城北旅游与生活指南",stayK:"您的住宿",via:{A:"来自预订信息的二维码",B:"房间内的二维码",G:"城北区厅网站的二维码"},
+  tabs:[["景点","附近"],["美食","老字号"],["活动","本周"],["生活","垃圾·帮助"],["帮助","电话"]],
+  good:["今天空气良好","今天无雨。适合户外游览。"],rain:["今天有雨","请带伞。优先显示室内景点。"],dust:["今天细颗粒物较差","请佩戴口罩。优先显示室内景点。"],
+  src:"Air Korea · 韩国气象厅（演示数值）",indoor:"室内",outdoor:"室外",outside:"城北区外",
+  whyRain:"今天可能下雨，推荐室内景点。",whyDust:"今天空气较差，推荐室内景点。",
+  orae:"首尔老字号",foodNote:"百年老店（백년가게）将从全国名单中添加。",
+  events:[["城北夜间漫步（示例）","本周末 · 城北洞","免费"],["韩屋手工课（示例）","周六 14:00 · 城北洞","收费"]],evNote:"实际活动来自首尔文化活动数据（日期、地点、费用）。",
+  trash:"垃圾投放日",trashA:"周一 · 周三 · 周五 18:00–20:00",trashB:"周二 · 周四 · 周日 18:00–20:00",trashWhere:"请放在所住建筑门前。",
+  trashHow:"一般垃圾：计量收费垃圾袋（便利店有售）。可回收物：透明袋另放。厨余：厨余专用袋。",
+  cs:"最近的便利店（可买垃圾袋）",pm:"最近的药店",office:"居民中心",police:"派出所",live:"实时 · Kakao 地图",nomap:"地图可用时显示。",
+  transit:"公交与地铁",transitTxt:"4号线 · 汉城大入口站。上下车都刷卡可免费换乘。",
+  pass:"气候同行卡短期券",passTxt:"1日 ₩5,000 · 2日 ₩8,000 · 3日 ₩10,000 · 5日 ₩15,000 · 7日 ₩20,000",
+  h1:"1330 旅游咨询热线（24小时，多语言）",h2:"首尔茶山呼叫中心",h3:"城北区英文网站",h4:"Visit Seoul",
+  install:"安装应用",installTip:"打开浏览器菜单，选择“添加到主屏幕”。",demo:"演示",
+  foot:"名称、地址、时间按原始数据显示。不收集位置或联系方式。",
+  mapLoading:"正在加载 Kakao 地图…",mapNoKey:"地图暂时无法使用。列表仍可使用。",mapFail:"地图无法加载。列表仍可使用。"},
+ ja:{tag:"城北の観光・生活ガイド",stayK:"ご宿泊先",via:{A:"予約案内メッセージのQR",B:"お部屋のQR",G:"城北区庁サイトのQR"},
+  tabs:[["観光地","近く"],["グルメ","老舗"],["イベント","今週"],["生活","ごみ・相談"],["ヘルプ","電話"]],
+  good:["今日の空気は良好","雨の予報はありません。屋外観光にどうぞ。"],rain:["今日は雨の予報","傘をお持ちください。屋内の観光地を先に表示します。"],dust:["今日はPM2.5が悪い","マスクを着用してください。屋内の観光地を先に表示します。"],
+  src:"エアコリア · 韓国気象庁（デモ値）",indoor:"屋内",outdoor:"屋外",outside:"城北区外",
+  whyRain:"今日は雨の可能性があるので、屋内の観光地をおすすめします。",whyDust:"今日は空気が悪いので、屋内の観光地をおすすめします。",
+  orae:"ソウル老舗",foodNote:"百年店舗（ペンニョンカゲ）は全国リストから追加予定です。",
+  events:[["城北ナイトウォーク（例）","今週末 · 城北洞","無料"],["韓屋クラフト教室（例）","土 14:00 · 城北洞","有料"]],evNote:"実際のイベントはソウル文化行事データ（日付・場所・料金）から表示します。",
+  trash:"ごみの日",trashA:"月 · 水 · 金 18:00–20:00",trashB:"火 · 木 · 日 18:00–20:00",trashWhere:"建物の前に出してください。",
+  trashHow:"一般ごみ：従量制ごみ袋（コンビニで販売）。資源ごみ：透明な袋で分けて。生ごみ：生ごみ専用袋。",
+  cs:"最寄りのコンビニ（ごみ袋）",pm:"最寄りの薬局",office:"住民センター",police:"交番",live:"リアルタイム · Kakao地図",nomap:"地図が使えるときに表示します。",
+  transit:"バス・地下鉄",transitTxt:"4号線 · 漢城大入口駅。乗車時と降車時にカードをタッチすると乗り換え無料。",
+  pass:"気候同行カード短期券",passTxt:"1日 ₩5,000 · 2日 ₩8,000 · 3日 ₩10,000 · 5日 ₩15,000 · 7日 ₩20,000",
+  h1:"1330 観光通訳案内（24時間・多言語）",h2:"ソウル茶山コールセンター",h3:"城北区 英語サイト",h4:"Visit Seoul",
+  install:"アプリを追加",installTip:"ブラウザのメニューから「ホーム画面に追加」を選んでください。",demo:"デモ",
+  foot:"名称・住所・時間は元データのまま表示します。位置情報や連絡先は収集しません。",
+  mapLoading:"Kakao地図を読み込み中…",mapNoKey:"今は地図を表示できません。リストは使えます。",mapFail:"地図を読み込めませんでした。リストは使えます。"},
+ ko:{tag:"성북 관광 · 생활 안내",stayK:"내 숙소",via:{A:"예약 안내 메시지 QR",B:"숙소 안내문 QR",G:"성북구청 누리집 QR"},
+  tabs:[["관광지","가까운 곳"],["먹거리","오래가게"],["행사","이번 주"],["생활","쓰레기·도움"],["도움","전화"]],
+  good:["오늘 공기 좋음","비 예보가 없습니다. 실외 관광을 즐기세요."],rain:["오늘 비 예보","우산을 챙기세요. 실내 관광지를 먼저 보여 줍니다."],dust:["오늘 미세먼지 나쁨","마스크를 쓰세요. 실내 관광지를 먼저 보여 줍니다."],
+  src:"에어코리아 · 기상청 (시연 값)",indoor:"실내",outdoor:"실외",outside:"성북구 밖",
+  whyRain:"오늘 비가 올 수 있어 실내 관광지를 추천합니다.",whyDust:"오늘 공기가 나빠 실내 관광지를 추천합니다.",
+  orae:"서울 오래가게",foodNote:"백년가게는 전국 지정 목록에서 추가할 예정입니다.",
+  events:[["성북 야간 산책 (예시)","이번 주말 · 성북동","무료"],["한옥 공예 체험 (예시)","토 14:00 · 성북동","유료"]],evNote:"실제 행사는 서울시 문화행사 정보(날짜·장소·요금)에서 가져옵니다.",
+  trash:"쓰레기 배출",trashA:"월 · 수 · 금 18:00–20:00",trashB:"화 · 목 · 일 18:00–20:00",trashWhere:"건물 앞에 내놓으세요.",
+  trashHow:"일반쓰레기: 종량제 봉투(편의점 판매). 재활용: 투명 봉투에 따로. 음식물: 음식물 전용 봉투.",
+  cs:"가까운 편의점 (종량제 봉투)",pm:"가까운 약국",office:"주민센터",police:"파출소 · 지구대",live:"실시간 · 카카오 지도",nomap:"지도가 켜지면 보입니다.",
+  transit:"버스 · 지하철",transitTxt:"4호선 한성대입구역. 탈 때와 내릴 때 모두 카드를 대면 환승 할인.",
+  pass:"기후동행카드 단기권",passTxt:"1일 5,000원 · 2일 8,000원 · 3일 10,000원 · 5일 15,000원 · 7일 20,000원",
+  h1:"1330 관광통역안내 (24시간, 다국어)",h2:"120 다산콜센터",h3:"성북구청 영문 누리집",h4:"비짓서울",
+  install:"앱 설치",installTip:"브라우저 메뉴에서 「홈 화면에 추가」를 누르세요.",demo:"시연",
+  foot:"이름 · 주소 · 시간은 원래 데이터 그대로 보여 줍니다. 위치 · 연락처를 받지 않습니다.",
+  mapLoading:"카카오 지도를 불러오는 중…",mapNoKey:"지금은 지도를 볼 수 없어요. 목록은 그대로 쓸 수 있어요.",mapFail:"지도를 불러오지 못했어요. 목록은 그대로 쓸 수 있어요."}
+};
+
+// ---------- 상태 ----------
+const qs=new URLSearchParams(location.search);
+const S={stay:({a:"A",b:"B",g:"G"})[(qs.get("stay")||"").toLowerCase()]||(qs.get("from")==="gu"?"G":"A"),
+  lang:(navigator.language||"en").slice(0,2), w:"good", wx:null, tab:0};
+if(!T[S.lang])S.lang="en";
+if(STAYS[S.stay].info)S.tab=5;
+try{const sv=localStorage.getItem("sp_lang");if(sv&&T[sv])S.lang=sv;}catch(e){}   // 지난번에 고른 언어
+if(qs.get("lang")&&T[qs.get("lang")])S.lang=qs.get("lang");
+if(qs.has("stay")||qs.has("from"))document.getElementById("app").classList.add("nodemo");   // 휴대전화로 QR을 찍어 들어오면 시연판은 숨김
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nm=o=>S.lang==="ko"?o.ko:o.n[S.lang];
+function km(a,b){const R=6371,r=x=>x*Math.PI/180,dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);
+  const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+const fmt=d=>d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km";
+
+
+// ---------- 통합 날씨 (기상청 단기예보 · 에어코리아 형식의 시연 값) ----------
+// 기상청: 시간별 기온(TMP) · 하늘(SKY) · 강수확률(POP) · 강수량(PCP) / 에어코리아: 시간별 측정 PM10 · PM2.5 + 오늘 예보 등급
+const HOURS=[];for(let h=6;h<=23;h++)HOURS.push(h);
+function wxData(sc){
+  if(sc==="live")return LIVE.hours.map(x=>({h:x.h,tmp:Math.round(x.tmp),pop:x.pop,pcp:x.pcp,pm10:null,pm25:null,
+    sky:x.pty?(x.pty===3?"snow":"rain"):x.sky===4?"overcast":x.sky===3?"cloud":"sun"}));
+  return HOURS.map(h=>{
+    const base=sc==="rain"?15:sc==="dust"?17:14, amp=sc==="rain"?3:7;
+    const tmp=Math.round(base+amp*Math.sin((h-8)/14*Math.PI));
+    let sky="sun",pop=0,pcp=0;
+    if(sc==="good"){sky=h>=15&&h<=18?"cloud":"sun";pop=h>=15&&h<=18?10:0;}
+    if(sc==="rain"){sky="overcast";pop=h<11?30:h<13?50:h<=19?[60,70,80,80,70,60,60][h-13]:30;if(h>=13&&h<=19){sky="rain";pcp=[1,2,4,5,3,1,1][h-13];}}
+    if(sc==="dust"){sky=h>=12&&h<=16?"haze":"sun";pop=0;}
+    const pm10=sc==="dust"?Math.round(85+70*Math.sin((h-6)/17*Math.PI)):Math.round(sc==="rain"?22+6*Math.sin(h/3):30+12*Math.sin((h-6)/17*Math.PI));
+    const pm25=Math.round(pm10*(sc==="dust"?0.5:0.45));
+    return {h,tmp,sky,pop,pcp,pm10,pm25};
+  });
+}
+const g10=v=>v<=30?1:v<=80?2:v<=150?3:4, g25=v=>v<=15?1:v<=35?2:v<=75?3:4;   // 환경부 미세먼지 예보 등급
+const SKYI={sun:"☀️",cloud:"⛅",overcast:"☁️",rain:"🌧️",haze:"🌫️",snow:"🌨️"};
+// 관광지 순서에 쓰는 날씨: 실제 예보이면 강수확률 60% 이상이 있을 때 「비」로 본다
+let DUST=null;   // /api/dust : 에어코리아 실시간 측정 (성북구 측정소)
+const dustG=()=>DUST&&DUST.ok?g10(DUST.latest.pm10):0;
+const eff=()=>S.w==="live"?(LIVE&&LIVE.hours.some(x=>x.pop>=60)?"rain":dustG()>=3?"dust":"good"):S.w;
+const WXT={
+ en:{title:"Today in Seongbuk",dustNow:["Fine dust is bad now","PM10 {v} µg/m³, measured at {t}. Wear a mask. Indoor places are listed first."],more:"Details",liveSrc2:"KMA short-term forecast (issued {b}) · Air Korea, Seongbuk-gu station (measured {t})",dustLive:"Measured values for the last hours (Air Korea, Seongbuk-gu station).",liveSrc:"KMA short-term forecast (live, issued {b}) · fine dust not connected yet",dustNA:"not connected",dustNANote:"Air Korea is not connected yet. Use the demo buttons to see how fine dust alerts look.",src:"KMA short-term forecast · Air Korea (demo values)",temp:"Temperature",rain:"Rain",dust:"Fine dust",
+   lv:["","Good","Moderate","Bad","Very bad"],now:"Now",hourlyT:"Hourly temperature",hourlyR:"Hourly chance of rain (mm)",hourlyD:"Hourly PM10 / PM2.5 (µg/m³)",
+   noRain:"No rain",tap:"tap for hourly",dustNote:"Past hours are measured values; later hours follow today's forecast grade.",
+   sum:{liveOk:["No rain expected","Good for outdoor places."],good:["A clear day","No rain. Good for outdoor places."],rain:["Rain from {a} to {b}","Up to {p}%. Take an umbrella. Indoor places first."],dust:["Fine dust is bad today","Worst around {a}. Wear a mask. Indoor places first."]}},
+ zh:{title:"今日城北",dustNow:["现在细颗粒物较差","PM10 {v} µg/m³（{t}实测）。请戴口罩，优先显示室内景点。"],more:"详情",liveSrc2:"韩国气象厅短期预报（{b}发布）· Air Korea 城北区测站（{t}实测）",dustLive:"最近几小时的实测值（Air Korea 城北区测站）。",liveSrc:"韩国气象厅短期预报（实时，{b}发布）· 细颗粒物尚未连接",dustNA:"未连接",dustNANote:"尚未连接 Air Korea。可用演示按钮查看细颗粒物提醒效果。",src:"韩国气象厅短期预报 · Air Korea（演示数值）",temp:"气温",rain:"降雨",dust:"细颗粒物",
+   lv:["","良好","一般","差","很差"],now:"现在",hourlyT:"逐时气温",hourlyR:"逐时降雨概率（毫米）",hourlyD:"逐时 PM10 / PM2.5（µg/m³）",
+   noRain:"无雨",tap:"点开看逐时",dustNote:"已过时段为实测值，之后按今日预报等级显示。",
+   sum:{liveOk:["预计无雨","适合户外景点。"],good:["今天晴朗","无雨，适合户外景点。"],rain:["{a}至{b}有雨","最高{p}%。请带伞，优先室内景点。"],dust:["今天细颗粒物较差","{a}前后最严重。请戴口罩，优先室内景点。"]}},
+ ja:{title:"今日の城北",dustNow:["今、PMが悪い","PM10 {v} µg/m³（{t}測定）。マスクを。屋内の観光地を先に表示。"],more:"詳しく",liveSrc2:"気象庁短期予報（{b}発表）· エアコリア 城北区測定所（{t}測定）",dustLive:"直近数時間の測定値（エアコリア 城北区測定所）。",liveSrc:"気象庁短期予報（リアルタイム、{b}発表）· PMは未接続",dustNA:"未接続",dustNANote:"エアコリアはまだ接続していません。デモボタンでPM警報の表示を確認できます。",src:"気象庁短期予報 · エアコリア（デモ値）",temp:"気温",rain:"雨",dust:"PM",
+   lv:["","良い","普通","悪い","非常に悪い"],now:"今",hourlyT:"時間ごとの気温",hourlyR:"時間ごとの降水確率（mm）",hourlyD:"時間ごとの PM10 / PM2.5（µg/m³）",
+   noRain:"雨なし",tap:"タップで時間ごと",dustNote:"過ぎた時間は測定値、この先は今日の予報等級です。",
+   sum:{liveOk:["雨の予報なし","屋外観光にどうぞ。"],good:["晴れの一日","雨はありません。屋外観光にどうぞ。"],rain:["{a}〜{b} 雨","最大{p}%。傘をお持ちください。屋内を先に表示。"],dust:["今日はPMが悪い","{a}ごろが最も悪い。マスクを。屋内を先に表示。"]}},
+ ko:{title:"오늘의 성북",dustNow:["지금 미세먼지 나쁨","PM10 {v}µg/m³ ({t} 측정). 마스크를 쓰세요. 실내 관광지를 먼저 보여 줘요."],more:"자세히",liveSrc2:"기상청 단기예보 ({b} 발표) · 에어코리아 성북구 측정소 ({t} 측정)",dustLive:"최근 몇 시간 동안의 측정값이에요 (에어코리아 성북구 측정소).",liveSrc:"기상청 단기예보 (실시간 · {b} 발표) · 미세먼지는 아직 미연결",dustNA:"미연결",dustNANote:"에어코리아는 아직 연결하지 않았어요. 미세먼지 알림은 시연 버튼으로 볼 수 있어요.",src:"기상청 단기예보 · 에어코리아 (시연 값)",temp:"기온",rain:"비",dust:"미세먼지",
+   lv:["","좋음","보통","나쁨","매우나쁨"],now:"지금",hourlyT:"시간대별 기온",hourlyR:"시간대별 강수확률 (강수량 mm)",hourlyD:"시간대별 미세먼지 PM10 / 초미세먼지 PM2.5 (µg/m³)",
+   noRain:"비 없음",tap:"눌러서 시간대별",dustNote:"지난 시간은 측정값, 이후 시간은 오늘 예보 등급을 따릅니다.",
+   sum:{liveOk:["비 소식 없음","실외 관광을 즐기세요."],good:["맑은 하루","비 소식이 없어요. 실외 관광을 즐기세요."],rain:["{a} ~ {b} 비","최대 {p}%. 우산을 챙기세요. 실내 관광지를 먼저 보여 줘요."],dust:["오늘 미세먼지 나쁨","{a} 무렵 가장 나빠요. 마스크를 쓰세요. 실내 관광지를 먼저 보여 줘요."]}}
+};
+const hh=h=>(h<10?"0":"")+h+":00";
+function renderWeather(){
+  const w=WXT[S.lang],d=wxData(S.w),live=S.w==="live",nowH=live?d[0].h:Math.min(23,Math.max(6,new Date().getHours()));
+  const tmin=Math.min(...d.map(x=>x.tmp)),tmax=Math.max(...d.map(x=>x.tmp));
+  const rainH=d.filter(x=>x.pop>=60),pmax=Math.max(...d.map(x=>x.pop));
+  const dOk=live&&DUST&&DUST.ok;
+  const worst=live?(dOk?DUST.latest:null):d.reduce((a,b)=>b.pm10>a.pm10?b:a),dg=live?dustG():g10(worst.pm10);
+  const sk=live?(rainH.length?"rain":dg>=3?"dust":"liveOk"):S.w;
+  let sum=w.sum[sk].slice();
+  if(sk==="rain")sum=sum.map(x=>x.replace("{a}",hh(rainH[0].h)).replace("{b}",hh(rainH[rainH.length-1].h+1)).replace("{p}",pmax));
+  if(sk==="dust"&&dOk)sum=w.dustNow.map(x=>x.replace("{v}",DUST.latest.pm10).replace("{t}",DUST.latest.t.slice(11,16)));
+  else if(sk==="dust")sum=sum.map(x=>x.replace("{a}",hh(worst.h)));
+  const ic=live?(rainH.length?"☔":dg>=3?"😷":SKYI[d[0].sky]):{good:"☀️",rain:"☔",dust:"😷"}[S.w];
+  const box=document.getElementById("wx");box.className="wx "+eff();
+  const srcTxt=live?(dOk?w.liveSrc2.replace("{t}",DUST.latest.t.slice(11,16)):w.liveSrc).replace("{b}",LIVE.base.slice(4,6)+"/"+LIVE.base.slice(6,8)+" "+LIVE.base.slice(9,11)+":00"):w.src;
+  const btn=(k,label,val,sub)=>`<button aria-expanded="${S.wx===k}" onclick="openWx('${k}')"><small>${esc(label)}</small><b>${val}</b><i>${esc(sub)}</i></button>`;
+  if(S.compact&&!S.wx){   // 접힌 모양: 판정 한 줄 + 기온 + 미세먼지
+    box.innerHTML=`<button class="wx-mini" onclick="S.compact=false;renderWeather()" aria-expanded="false"><span class="ic" aria-hidden="true">${ic}</span><b>${esc(sum[0])}</b><span class="m">${tmin}–${tmax}°C${dg?` · <span class="lv lv${dg}">${esc(w.lv[dg])}</span>`:""}</span><span class="more">${esc(T5[S.lang].more)}</span></button>`;
+    return;
+  }
+  let html=`<div class="hd"><b>${esc(w.title)}</b><small>${esc(srcTxt)}</small></div>
+    <div class="sum"><div class="ic" aria-hidden="true">${ic}</div><div><strong>${esc(sum[0])}</strong><span>${esc(sum[1])}</span></div></div>
+    <div class="three">
+      ${btn("temp",w.temp,`${tmin}–${tmax}°C`,w.tap)}
+      ${btn("rain",w.rain,rainH.length?`${pmax}%`:esc(w.noRain),rainH.length?`${hh(rainH[0].h)}–${hh(rainH[rainH.length-1].h+1)}`:w.tap)}
+      ${live&&!dOk?btn("dust",w.dust,esc(w.dustNA),"Air Korea"):btn("dust",w.dust,`<span class="lv lv${dg}">${esc(w.lv[dg])}</span>`,`PM10 ${worst.pm10}`)}
+    </div>`;
+  if(S.wx){
+    const cell=(x,inner)=>`<div class="hc${x.h===nowH?" now":""}"><span class="h">${x.h===nowH?esc(w.now):x.h}</span>${inner}</div>`;
+    let ttl,row;
+    if(S.wx==="temp"){ttl=w.hourlyT;row=d.map(x=>cell(x,`<span class="e">${SKYI[x.sky]}</span><span class="v">${x.tmp}°</span>`)).join("");}
+    if(S.wx==="rain"){ttl=w.hourlyR;row=d.map(x=>cell(x,`<span class="e">${SKYI[x.sky]}</span><div class="bar"><i style="height:${x.pop}%;background:${x.pop>=60?"#1c7ed6":"#91c3f0"}"></i></div><span class="v">${x.pop}%</span><span class="s">${x.pcp?esc(typeof x.pcp==="number"?x.pcp+"mm":x.pcp):"–"}</span>`)).join("");}
+    if(S.wx==="dust"&&dOk){ttl=w.hourlyD;row=DUST.hours.map((x,i)=>{const g=g10(x.pm10);return `<div class="hc${i===DUST.hours.length-1?" now":""}"><span class="h">${i===DUST.hours.length-1?esc(w.now):x.h}</span><div class="bar"><i class="lv${g}" style="height:${Math.min(100,x.pm10/1.8)}%"></i></div><span class="v">${x.pm10}</span><span class="s">${x.pm25}</span></div>`}).join("");}
+    else if(S.wx==="dust"&&live){box.innerHTML=html+`<div class="hourly"><p class="nt">${esc(w.dustNANote)}</p></div>`;return;}
+    else if(S.wx==="dust"){ttl=w.hourlyD;row=d.map(x=>{const g=g10(x.pm10);return cell(x,`<div class="bar"><i class="lv${g}" style="height:${Math.min(100,x.pm10/1.8)}%"></i></div><span class="v">${x.pm10}</span><span class="s">${x.pm25}</span>`)}).join("");}
+    const legend=S.wx==="dust"?`<div class="legend2">${[1,2,3,4].map(i=>`<span><i class="lv${i}"></i>${esc(w.lv[i])}</span>`).join("")}</div><p class="nt">${esc(dOk?w.dustLive:w.dustNote)}</p>`:"";
+    html+=`<div class="hourly"><p class="ttl">${esc(ttl)}</p><div class="hscroll"><div class="hrow">${row}</div></div>${legend}</div>`;
+  }
+  box.innerHTML=html;
+  const sc=box.querySelector(".hscroll"),now=box.querySelector(".hc.now");if(sc&&now)sc.scrollLeft=now.offsetLeft-sc.clientWidth/2+now.clientWidth/2;
+}
+function openWx(k){S.wx=S.wx===k?null:k;renderWeather();}
+
+// ---------- 화면 ----------
+function render(){
+  const t=T[S.lang],st=STAYS[S.stay];
+  document.documentElement.lang=S.lang==="zh"?"zh-CN":S.lang;
+  document.getElementById("lang").value=S.lang;
+  document.getElementById("tagline").textContent=t.tag;
+  document.getElementById("stayK").textContent=t.stayK;
+  document.getElementById("stayName").textContent=st.name[S.lang];
+  document.getElementById("via").textContent=t.via[S.stay];
+  document.getElementById("foot").textContent=t.foot;
+  document.getElementById("installTxt").textContent=t.install;
+  renderWeather();
+  const tabList=t.tabs.map((x,i)=>[i,i===2?T2[S.lang].tabs2[0]:x[0]]);
+  if(STAYS[S.stay].info)tabList.unshift([5,T4[S.lang].tab]);
+  const tb=document.getElementById("tabs");tb.style.gridTemplateColumns=`repeat(${tabList.length},1fr)`;
+  tb.innerHTML=tabList.map(([i,lab])=>`<button role="tab" aria-selected="${i===S.tab}" onclick="setTab(${i})">${esc(lab)}</button>`).join("");
+  document.querySelectorAll("#staySeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.stay===S.stay));
+  document.querySelectorAll("#wSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.w===S.w));
+  renderList(); drawMarkers();
+}
+function sortedSpots(){const st=STAYS[S.stay],bad=eff()!=="good";
+  return SPOTS.map(s=>({...s,dist:km(st,s)})).sort((a,b)=>bad?(b.indoor-a.indoor)||(a.dist-b.dist):a.dist-b.dist);}
+function sortedFood(){const st=STAYS[S.stay];return FOOD.map(f=>({...f,dist:km(st,f)})).sort((a,b)=>a.dist-b.dist);}
+
+function renderList(){
+  const t=T[S.lang],u=T2[S.lang],L=document.getElementById("list"),st=STAYS[S.stay];
+  const srcLink=k=>`<a href="${SBEN(k)}" target="_blank" rel="noopener">${esc(u.source)}</a>`;
+  const srcLine=`<p class="srcl"><a href="https://sb.go.kr/en/index.do" target="_blank" rel="noopener">${esc(u.srcLine)}</a></p>`;
+  if(S.tab===5){
+    L.innerHTML=stayHtml();
+  }else if(S.tab===0){
+    L.innerHTML=sortedSpots().map((s,i)=>{const o=openState(s);return `<div class="item" onclick="focusPlace('${s.ko}')">
+      <span class="no" style="background:${s.indoor?"var(--ok)":"var(--warn)"}">${i+1}</span>
+      <h3>${esc(nm(s))}${S.lang==="ko"?"":`<span class="orig">${esc(s.ko)}</span>`}</h3><span class="d">${fmt(s.dist)}</span>
+      <div class="meta"><span class="chip ${s.indoor?"in":"out"}">${s.indoor?t.indoor:t.outdoor}</span>${s.gu==="jn"?`<span class="chip ext">${t.outside}</span>`:""}${s.gu==="bd"?`<span class="chip bd">${esc(u.border)}</span>`:""}${esc(s.d[S.lang])}</div>
+      <div class="hrs"><span class="chip ${o.cls}">${esc(o.txt)}</span>${o.line?`<span>${esc(o.line)}</span>`:""}${s.tel?`<span>☎ ${s.tel}</span>`:""}${s.src==="gu"?srcLink(s.key):`<span class="note">${esc(u.other)}</span>`}${walkLink(s.ko,s.lat,s.lng)}</div>
+      ${s.addr?`<div class="addr">${esc(s.addr)}</div>`:""}
+      ${hyHtml(s.hy)}
+      ${eff()!=="good"&&s.indoor&&i===0?`<div class="why">${esc(eff()==="rain"?t.whyRain:t.whyDust)}</div>`:""}</div>`}).join("")+srcLine+tourHtml();
+    loadTour();
+  }else if(S.tab===1){
+    L.innerHTML=sortedFood().map((f,i)=>`<div class="item" onclick="focusPlace('${f.ko}')">
+      <span class="no" style="background:var(--food)">${i+1}</span>
+      <h3>${esc(nm(f))}${S.lang==="ko"?"":`<span class="orig">${esc(f.ko)}</span>`}</h3><span class="d">${fmt(f.dist)}</span>
+      <div class="meta"><span class="chip">${esc(t.orae)}</span>${esc(f.k[S.lang])}</div><div class="hrs">${walkLink(f.ko,f.lat,f.lng)}</div></div>`).join("")+centHtml()
+      +`<p class="sec">${esc(T3[S.lang].menuT)}</p><input class="srch" id="mq" type="search" placeholder="${esc(T3[S.lang].menuPh)}" value="${esc(S.mq||"")}" oninput="S.mq=this.value;menuSearch()"><div id="mres"></div>`
+      +(D?`<p class="srcl">${esc(D.sources.menu)}</p>`:"");
+    menuSearch();loadCent();
+  }else if(S.tab===2){
+    const m=new Date().getMonth()+1,dist=f=>f.m.length?Math.min(...f.m.map(x=>(x-m+12)%12)):99;
+    const card=f=>`<div class="blk"><h3>${esc(f.n[S.lang])}</h3><p class="note">${esc(f.p[S.lang])}</p>${f.hold?`<p class="note" style="color:var(--warn)">${esc(u.onHold)}</p>`:""}<div class="hrs" style="margin:0">${f.tel?`<span>☎ ${f.tel}</span>`:""}${srcLink(f.key)}</div></div>`;
+    const now=FEST.filter(f=>f.m.includes(m)),soon=FEST.filter(f=>!f.m.includes(m)&&dist(f)<=3).sort((a,b)=>dist(a)-dist(b)),rest=FEST.filter(f=>!now.includes(f)&&!soon.includes(f)).sort((a,b)=>dist(a)-dist(b));
+    L.innerHTML=evHtml()+`<p class="sec">${esc(u.tabs2[1])}</p>`+(now.length?`<p class="sec">${esc(u.thisMonth)}</p>`+now.map(card).join(""):"")+(soon.length?`<p class="sec">${esc(u.next)}</p>`+soon.map(card).join(""):"")+`<p class="sec">${esc(u.later)}</p>`+rest.map(card).join("")+`<p class="note">${esc(u.exact)}</p>`+srcLine;
+  }else if(S.tab===3){
+    if(!D){L.innerHTML=`<p class="note">…</p>`;return;}
+    const u3=T3[S.lang],dg=DONG[S.stay],today=new Date().getDay();
+    const zi=S.zone!=null?S.zone:defaultZone(),z=D.trash[zi];
+    const dIdx=str=>str.split("+").map(x=>"일월화수목금토".indexOf(x.trim())).filter(i=>i>=0);
+    const dline=(lab,str)=>{const ds=dIdx(str),on=ds.includes(today);
+      return `<span>${esc(lab)}</span><span class="${on?"today":""}">${ds.length===6&&!ds.includes(6)?esc(u3.exSat):ds.map(i=>u.dayN[i]).join(" · ")}${on?" ✓ "+esc(u3.today):""}</span>`;};
+    const opts=D.trash.map((x,i)=>[i,x]).sort((a,b)=>parseInt(a[1].zone)-parseInt(b[1].zone)||a[1].areas[0].localeCompare(b[1].areas[0]))
+      .map(([i,x])=>`<option value="${i}"${i===zi?" selected":""}>${esc(showKo()?x.areas.join(", ")+" ("+x.zone+")":x.areas.map(romanDong).join(", ")+" · "+x.areas.join(", "))}</option>`).join("");
+    const near=(arr,n)=>arr.map(p=>({...p,d:km(st,p)})).sort((a,b)=>a.d-b.d).slice(0,n);
+    const nearHtml=(k)=>NEAR[k]===null?`<p class="note">${esc(t.nomap)}</p>`:(NEAR[k]||[]).map(p=>`<div class="near"><span>${esc(p.name)}</span><span>${fmt(p.d)}</span></div>`).join("")||`<p class="note">…</p>`;
+    const polK=n=>n.endsWith("지구대")?u3.jigu:u3.pachul;
+    const geo=D.police.filter(p=>p.lat!=null);
+    const polHtml=geo.length?near(geo,3).map(p=>`<div class="near"><span>${showKo()?esc(p.name)+` <span class="chip">${esc(polK(p.name))}</span>`:`${esc(trPolice(p.name))} <span class="orig">${esc(p.name)}</span>`}<small>${esc(trStation(p.station))} · ${esc(p.addr)} ${walkLink(p.name,p.lat,p.lng)}</small></span><span>${fmt(p.d)}</span></div>`).join("")
+      :`<p class="note">${esc(u3.policeNoMap)}</p>`+D.police.map(p=>`<div class="near"><span>${showKo()?esc(p.name)+` <span class="chip">${esc(polK(p.name))}</span>`:`${esc(trPolice(p.name))} <span class="orig">${esc(p.name)}</span>`}<small>${esc(trStation(p.station))} · ${esc(p.addr)}</small></span><span></span></div>`).join("");
+    const isToday=dIdx(z.general).includes(today);
+    L.innerHTML=`<div class="blk"><h3>${esc(u.trashT)} ${isToday?`<span class="tag live">${esc(T3[S.lang].today)}</span>`:""}</h3>
+        <p class="big">${esc(showKo()?z.areas.join(", "):z.areas.map(romanDong).join(", "))}</p>
+        <div class="days">${dline(u3.gen,z.general)}${dline(u3.food,z.food)}${dline(u3.rec,z.recycle)}<span>${esc(u3.putOut)}</span><span>${esc(z.start)}–${esc(z.end)}</span></div>
+        <label class="note">${esc(u3.zoneL)} <select class="zone" onchange="S.zone=+this.value;renderList()">${opts}</select></label>
+        <p>${esc(u.trashRule)}</p><p>${esc(t.trashHow)}</p><p class="note">💡 ${esc(u.tip)}</p><p class="note">${esc(showKo()?(z.dept||u.trashCall):u.trashCall)} ☎ ${esc(z.tel||"02-2241-4400")}</p></div>
+      <div class="blk"><h3>${esc(u.bags)}</h3><p>${esc(u.bagsTxt)}</p>${bagHtml()}</div>
+      <div class="blk"><h3>${esc(u3.govT)}</h3>
+        ${centerHtml()||`<p><b>${esc(u.centerT)}</b> · ${esc(S.lang==="ko"?dg.center.ko:dg.center.en)}${dg.center.addr?` · ${esc(dg.center.addr)}`:""} · ☎ ${dg.center.tel}</p>`}
+        <p class="sec" style="margin-left:0">${esc(u3.policeT)}</p>${polHtml}<p class="note">${esc(u3.call112)}</p></div>
+      <div class="blk"><h3>${esc(u3.toiletT)}</h3>${near(D.toilets,3).map(p=>`<div class="near"><span>${withRoman(p.name)}<small>${esc(trOpen(p.open))}${p.addr?" · "+esc(p.addr):""}</small></span><span>${fmt(p.d)}</span></div>`).join("")}</div>
+      <div class="blk"><h3>${esc(u3.wifiT)}</h3>${near(D.wifi,3).map(p=>`<div class="near"><span>${withRoman(p.name)} <span class="chip ${p.indoor?"in":"out"}">${p.indoor?t.indoor:t.outdoor}</span><small>${esc(p.addr)}</small></span><span>${fmt(p.d)}</span></div>`).join("")}</div>
+      <div class="blk"><h3>${esc(t.cs)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("cs")}</div>
+      <div class="blk"><h3>${esc(t.pm)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("pm")}</div>
+      <div class="blk"><h3>${esc(u.money)}</h3><p>${esc(u.moneyTxt)}</p></div>
+      <div class="blk"><h3>${esc(T6[S.lang].gT)}</h3><p><b>${esc(T6[S.lang].gStn)}</b> · ${esc(STN[(STAYS[S.stay].info||{}).stn||"hansung"].n[S.lang])}</p><p>${esc(T6[S.lang].gTap)}</p></div>
+      <div class="blk"><h3>${esc(t.pass)}</h3><p>${esc(t.passTxt)}</p><p>${esc(T6[S.lang].pWhere)}</p><p>${esc(T6[S.lang].pCard)}</p><p class="note">${esc(T6[S.lang].pNot)}</p><p class="note">${esc(T6[S.lang].pPrice)}</p><p class="srcl">${esc(T6[S.lang].pSrc)}</p></div>${rideHtml()}
+      <p class="srcl"><b>${esc(u3.srcData)}</b><br>${["trash","police","toilets","wifi"].map(k=>esc(D.sources[k])).join("<br>")}</p>`+srcLine;
+  }else{
+    const row=(n,txt)=>`<div class="near"><span>${esc(txt)}</span><a class="big tel" href="tel:${n.replace(/-/g,"")}">${n}</a></div>`;
+    L.innerHTML=(STAYS[S.stay].info?`<div class="stay-act"><button type="button" class="act-main" onclick="openTaxi()">${esc(T6[S.lang].myAddr)}</button></div>`:"")+`<div class="blk">${row("119",u.e119)}${row("112",u.e112)}${row("1330",t.h1)}${row("120",t.h2)}${row("1588-5644",u.e1588)}</div>
+      <div class="blk"><h3>${esc(u.hosp)}</h3><p>${esc(u.hospTxt)} · ☎ 1577-0083</p></div>
+      <div class="blk"><h3>${esc(u.medRef)}</h3><p>medicalreferral@seoul.go.kr</p></div>
+      <div class="blk"><h3>${esc(u.post)}</h3><p>1588-1300</p></div>
+      <div class="blk"><h3>${esc(t.h3)}</h3><p><a href="https://sb.go.kr/en/index.do" target="_blank" rel="noopener">sb.go.kr/en</a></p></div>
+      <div class="blk"><h3>${esc(t.h4)}</h3><p><a href="https://english.visitseoul.net" target="_blank" rel="noopener">english.visitseoul.net</a></p></div>`+srcLine;
+  }
+}
+function setTab(i){if(i!==S.tab){S.compact=true;S.wx=null;}S.tab=i;render();if(i===3){loadNear();loadLife();}}
+function defaultZone(){const dn=S.stay==="B"?"성북동":"삼선동";const i=D.trash.findIndex(z=>z.areas.includes(dn));return i<0?0:i;}
+// 한양도성 공식 영문 안내 (공공누리 4유형: 고치지 않고 원문 그대로 + 출처)
+function hyHtml(no){
+  if(!no||!D)return "";const h=D.hanyang.find(x=>x.no===no);if(!h)return "";const u3=T3[S.lang];
+  return `<details class="off" onclick="event.stopPropagation()"><summary>📜 ${esc(u3.hyT)}</summary><p lang="en"><b>${esc(h.title)}</b><br>${esc(h.intro)}</p><small>${esc(u3.hySrc)}</small></details>`;
+}
+// 한식 800선 검색: 이름은 한식진흥원 공식 표기 그대로
+function menuSearch(){
+  const box=document.getElementById("mres");if(!box)return;
+  if(!D){box.innerHTML=`<p class="note">…</p>`;return;}
+  const q=(S.mq||"").trim().toLowerCase(),u3=T3[S.lang];
+  const list=q?D.menu.filter(m=>[m.ko,m.en,m.rom,m.ja,m.zh].some(x=>x&&x.toLowerCase().includes(q))).slice(0,12)
+    :MENU_PICK.map(k=>D.menu.find(m=>m.ko===k)).filter(Boolean);
+  box.innerHTML=list.length?list.map(m=>{const main=S.lang==="ko"?m.ko:(m[S.lang]||m.en);
+    const alt=[m.ko,m.rom,S.lang!=="en"?m.en:"",S.lang!=="ja"?m.ja:"",S.lang!=="zh"?m.zh:""].filter(x=>x&&x!==main);
+    return `<div class="menu"><b>${esc(main)}</b> <span class="chip">${esc(m.cat)}</span><div class="alt">${alt.map(esc).join(" · ")}</div>${S.lang==="en"&&m.enDesc?`<p>${esc(m.enDesc)}</p>`:""}</div>`;}).join("")
+    :`<p class="note">${esc(u3.menuNone)}</p>`;
+}
+// 서울문화포털 성북 행사 (오늘 이후 끝나는 것)
+const EVCAT={"전시":["Exhibition","展览","展示"],"전시/미술":["Exhibition","展览","展示"],"국악":["Korean traditional music","国乐","国楽"],"교육/체험":["Class / hands-on","教育/体验","教育・体験"],
+  "클래식":["Classical music","古典音乐","クラシック"],"연극":["Theater","话剧","演劇"],"콘서트":["Concert","演唱会","コンサート"],"뮤지컬/오페라":["Musical / opera","音乐剧/歌剧","ミュージカル・オペラ"],
+  "무용":["Dance","舞蹈","ダンス"],"영화":["Film","电影","映画"],"축제-문화/예술":["Festival","节庆","フェスティバル"],"축제-전통/역사":["Festival (traditional)","传统节庆","伝統祭り"],
+  "축제-시민화합":["Community festival","市民节庆","地域の祭り"],"축제-기타":["Festival","节庆","フェスティバル"],"독주/독창회":["Recital","独奏/独唱会","リサイタル"],"기타":["Other","其他","その他"]};
+const evCat=c=>{const v=EVCAT[c];return showKo()||!v?c:v[{en:0,zh:1,ja:2}[S.lang]];};
+function evHtml(){
+  if(!D||!D.events.length)return "";
+  const u3=T3[S.lang],st=STAYS[S.stay],td=new Date().toISOString().slice(0,10);
+  return `<p class="sec">${esc(u3.evLive)}</p>`+D.events.map((e,i)=>{const on=e.start<=td;
+    return `<div class="ev"${e.lat?` onclick="focusEv(${i})" style="cursor:pointer"`:""}><span class="when">${esc(e.start.slice(5).replace("-","/"))} – ${esc(e.end.slice(5).replace("-","/"))}</span>${on?` <span class="chip in">${esc(u3.ongoing)}</span>`:""}
+      <h3>${esc(e.title)}</h3>${aiLine("event",e.title)}<p class="note" style="margin:0">${esc(e.place)}${e.time?" · "+esc(e.time):""}</p>
+      <div class="hrs">${e.cat?`<span class="chip">${esc(evCat(e.cat))}</span>`:""}<span class="chip ${e.free==="무료"?"in":""}">${esc(e.free==="무료"?u3.free:u3.paid)}</span>${e.fee&&e.free!=="무료"?`<span>${esc(e.fee)}</span>`:""}${e.lat?`<span class="d" style="color:var(--navy);font-weight:700">${fmt(km(st,e))}</span>`:""}${(e.lat?walkLink(e.place,e.lat,e.lng):"")+(e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(u3.more)}</a>`:"")}</div></div>`;}).join("")
+    +`<p class="note">${esc(u3.evKo)}</p><p class="srcl">${esc(D.sources.events)}</p>`;
+}
+function focusEv(i){const e=D.events[i];showRoute(e.lat,e.lng,e.place);}
+// 시연판: 숫자로 본 성북
+function renderStats(){
+  if(!D)return;const s=D.stats,n=x=>x==null?"–":x.toLocaleString("ko-KR"),tot=Object.values(s.stays).reduce((a,b)=>a+b,0);
+  const nat=s.foreignNat.filter(x=>x!=="기타").slice(0,5).join(" · ");
+  const fd=s.foreignDay?s.foreignDay.slice(0,4)+"-"+s.foreignDay.slice(4,6)+"-"+s.foreignDay.slice(6):"";
+  document.getElementById("stats").innerHTML=`<span>2025 방한 외래관광객</span><b>${n(s.visitors2025)}명</b>
+    <span>성북구 등록 숙소 (영업 중)</span><b>${n(tot)}곳</b>
+    <span>· 외국인관광도시민박</span><b>${n(s.stays.minbak)}</b><span>· 한옥체험업</span><b>${n(s.stays.hanok)}</b>
+    <span>· 숙박업</span><b>${n(s.stays.lodging)}</b><span>· 관광숙박업</span><b>${n(s.stays.hotel)}</b>
+    <span style="grid-column:1/3">성북 단기체류 외국인 많은 국적 (${fd}): ${esc(nat)}</span>
+    <span>공중화장실 · 와이파이</span><b>${n(D.toilets.length)} · ${n(D.wifi.length)}</b>
+    <span>지구대 · 파출소 · 행사</span><b>${n(D.police.length)} · ${n(D.events.length)}</b>
+    <span>한식 메뉴 공식 표기</span><b>${n(D.menu.length)}</b>`;
+}
+function go(){S.tab=STAYS[S.stay].info?5:0;render();}
+
+// ---------- 카카오 지도 ----------
+let map=null,ps=null,overlays=[],NEAR={cs:undefined,pm:undefined,gov:undefined};
+function mapMsg(txt){const m=document.getElementById("mapmsg");m.hidden=!txt;m.textContent=txt||"";}
+function loadKakao(){
+  const t=T[S.lang];
+  if(!KAKAO_JS_KEY||KAKAO_JS_KEY.startsWith("__")){console.warn("[세이프패스] 카카오 지도 키 없음: .env 의 javascriptKey 확인");mapMsg(t.mapNoKey);NEAR={cs:null,pm:null,gov:null};return;}
+  mapMsg(t.mapLoading);
+  const s=document.createElement("script");
+  s.src="https://dapi.kakao.com/v2/maps/sdk.js?appkey="+encodeURIComponent(KAKAO_JS_KEY)+"&autoload=false&libraries=services";
+  s.onerror=()=>{mapMsg(t.mapFail);NEAR={cs:null,pm:null,gov:null};renderList();};
+  s.onload=()=>kakao.maps.load(()=>{
+    map=new kakao.maps.Map(document.getElementById("kakaoMap"),{center:new kakao.maps.LatLng(37.5925,127.0020),level:5});
+    ps=new kakao.maps.services.Places();
+    mapMsg("");
+    refineCoords().then(()=>{render();geocodeCent();});
+    drawMarkers();geocodePolice();
+  });
+  document.head.appendChild(s);
+}
+// 관광지 · 가게 위치를 카카오 장소 검색으로 맞춘다 (원래 이름은 그대로 둔다)
+function refineCoords(){
+  const center=new kakao.maps.LatLng(37.5925,127.0020);
+  const one=o=>new Promise(res=>ps.keywordSearch(o.q,(r,st)=>{
+    if(st===kakao.maps.services.Status.OK&&r[0]){o.lat=+r[0].y;o.lng=+r[0].x;o.live=true;}res();},{location:center,radius:5000}));
+  return Promise.all([...SPOTS,...FOOD].map(one));
+}
+function pinHtml(cls,label,color){return `<div class="pin ${cls}" style="${color?`background:${color}`:""}"><span>${label}</span></div>`;}
+function drawMarkers(){
+  if(!map)return;
+  overlays.forEach(o=>o.setMap(null));overlays=[];routeObjs.forEach(o=>o.setMap(null));routeObjs=[];
+  const st=STAYS[S.stay],add=(lat,lng,html,z)=>{const o=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(lat,lng),content:html,yAnchor:1,zIndex:z});overlays.push(o);return o;};
+  add(st.lat,st.lng,pinHtml("home","⌂",""),10);
+  const bounds=new kakao.maps.LatLngBounds();bounds.extend(new kakao.maps.LatLng(st.lat,st.lng));
+  if(S.showStays&&D)D.stays.forEach(s=>add(s.lat,s.lng,`<div class="dot" title="${esc(s.name)}" style="background:${({minbak:"#7048e8",hanok:"#e8590c",lodging:"#868e96",hotel:"#1c7ed6"})[s.kind]}"></div>`,2));
+  if(S.tab===5){const sn=STN.hansung;add(sn.lat,sn.lng,pinHtml("","M","#2F6B5C"),5);bounds.extend(new kakao.maps.LatLng(sn.lat,sn.lng));}
+  else if(S.tab===1&&API.cent&&API.cent.ok){sortedFood().forEach((f,i)=>add(f.lat,f.lng,pinHtml("",i+1,"#8C3B4A"),5));API.cent.rows.filter(c=>c.lat).forEach(c=>{add(c.lat,c.lng,pinHtml("","百","#8C3B4A"),5);bounds.extend(new kakao.maps.LatLng(c.lat,c.lng));});}
+  else if(S.tab===1)sortedFood().forEach((f,i)=>{add(f.lat,f.lng,pinHtml("",i+1,"#d6336c"),5);bounds.extend(new kakao.maps.LatLng(f.lat,f.lng));});
+  else if(S.tab===2&&D){D.events.filter(e=>e.lat).forEach(e=>{add(e.lat,e.lng,pinHtml("","★","#ae3ec9"),5);bounds.extend(new kakao.maps.LatLng(e.lat,e.lng));});}
+  else if(S.tab===3&&D){
+    const nr=(arr,n)=>arr.map(p=>({...p,d:km(st,p)})).sort((a,b)=>a.d-b.d).slice(0,n);
+    nr(D.police.filter(p=>p.lat!=null),3).forEach(p=>{add(p.lat,p.lng,pinHtml("","P","#364fc7"),6);bounds.extend(new kakao.maps.LatLng(p.lat,p.lng));});
+    nr(D.toilets,3).forEach(p=>{add(p.lat,p.lng,pinHtml("","T","#495057"),5);bounds.extend(new kakao.maps.LatLng(p.lat,p.lng));});
+    nr(D.wifi,3).forEach(p=>{add(p.lat,p.lng,pinHtml("","W","#0c8599"),5);bounds.extend(new kakao.maps.LatLng(p.lat,p.lng));});
+  }
+  else{if(S.tab===0)tourItems().slice(0,12).forEach((x,i)=>add(x.lat,x.lng,pinHtml("",i+1,"#4E5D6C"),4));sortedSpots().forEach((s,i)=>{add(s.lat,s.lng,pinHtml("",i+1,s.indoor?"#2b8a3e":"#c2560f"),5);if(i<5)bounds.extend(new kakao.maps.LatLng(s.lat,s.lng));});};
+  // 숙소가 지도 정가운데: 숙소에서 가장 먼 표시까지의 거리를 위아래 · 좌우로 똑같이 넓혀서 맞춘다
+  const home=new kakao.maps.LatLng(st.lat,st.lng),sw=bounds.getSouthWest(),ne=bounds.getNorthEast();
+  const dLat=Math.max(Math.abs(ne.getLat()-st.lat),Math.abs(sw.getLat()-st.lat),0.002),dLng=Math.max(Math.abs(ne.getLng()-st.lng),Math.abs(sw.getLng()-st.lng),0.002);
+  map.setBounds(new kakao.maps.LatLngBounds(new kakao.maps.LatLng(st.lat-dLat,st.lng-dLng),new kakao.maps.LatLng(st.lat+dLat,st.lng+dLng)),40,40,40,40);
+  if(map.getLevel()<3)map.setLevel(3);
+  centerHome();
+}
+// 카카오 지도가 범위 · 축척을 다 바꾼 뒤에 숙소를 가운데로 (바로 하면 밀릴 때가 있음)
+function centerHome(){
+  if(!map)return;const st=STAYS[S.stay],home=new kakao.maps.LatLng(st.lat,st.lng);
+  map.setCenter(home);
+  requestAnimationFrame(()=>{map.relayout();map.setCenter(home);setTimeout(()=>map.setCenter(home),120);});
+}
+let routeObjs=[],routeSeq=0;
+// 숙소 → 장소 도보 경로를 지도에 그림. 서버(/api/walk)가 틈길 엔진의 '안전한 길'(CCTV가 많은 길 우선)을 계산, 없으면 OpenStreetMap 도보 경로.
+// 실패하면 직선 점선 + 직선거리 기준 예상 시간으로 대신 표시
+function showRoute(lat,lng,label){
+  if(!map)return;
+  if(matchMedia("(max-width:950px)").matches)document.getElementById("map").scrollIntoView({behavior:"smooth",block:"start"});   // 휴대전화는 지도가 목록 아래에 있음routeObjs.forEach(o=>o.setMap(null));routeObjs=[];
+  const seq=++routeSeq,st=STAYS[S.stay],a=new kakao.maps.LatLng(st.lat,st.lng),b=new kakao.maps.LatLng(lat,lng);
+  const tag=m=>`<div class="ov">${esc(label)}<small>${esc(T4[S.lang].walkT.replace("{m}",m))}</small></div>`;
+  const ov=new kakao.maps.CustomOverlay({map,position:b,content:tag(walkMin(km(st,{lat,lng}))),yAnchor:1,zIndex:20});
+  routeObjs.push(ov);
+  const fit=pts=>{let dLat=0.001,dLng=0.001;pts.forEach(p=>{dLat=Math.max(dLat,Math.abs(p[0]-st.lat)*1.15+0.001);dLng=Math.max(dLng,Math.abs(p[1]-st.lng)*1.15+0.001);});
+    // 숙소는 가운데 그대로, 경로 전체가 보이게 축척만 맞춤
+    map.setBounds(new kakao.maps.LatLngBounds(new kakao.maps.LatLng(st.lat-dLat,st.lng-dLng),new kakao.maps.LatLng(st.lat+dLat,st.lng+dLng)),40,40,40,40);centerHome();};
+  fit([[lat,lng]]);
+  fetch(`/api/walk?from=${st.lat},${st.lng}&to=${lat},${lng}`).then(r=>r.json()).then(j=>{
+    if(seq!==routeSeq)return;            // 그사이 다른 장소를 눌렀으면 버림
+    if(!j.ok||!j.path||j.path.length<2)throw new Error(j.reason||"no route");
+    const path=[[st.lat,st.lng],...j.path,[lat,lng]];
+    routeObjs.push(new kakao.maps.Polyline({map,path:path.map(p=>new kakao.maps.LatLng(p[0],p[1])),strokeWeight:7,strokeColor:"#F3F4EF",strokeOpacity:0.9,zIndex:3}));
+    routeObjs.push(new kakao.maps.Polyline({map,path:path.map(p=>new kakao.maps.LatLng(p[0],p[1])),strokeWeight:4,strokeColor:"#2F6B5C",strokeOpacity:0.95,zIndex:4}));
+    ov.setContent(tag(j.min?Math.max(1,Math.round(j.min)):Math.max(1,Math.round(j.dist/80))));   // 틈길 엔진은 경사·계단·신호 대기까지 넣은 시간, 아니면 분속 80m
+    fit(path);
+  }).catch(e=>{
+    if(seq!==routeSeq)return;
+    console.warn("도보 경로를 받지 못해 직선으로 표시:",e);
+    routeObjs.push(new kakao.maps.Polyline({map,path:[a,b],strokeWeight:3,strokeColor:"#26384A",strokeOpacity:0.6,strokeStyle:"shortdash",zIndex:3}));
+  });
+}
+function focusPlace(ko){
+  const p=[...SPOTS,...FOOD].find(x=>x.ko===ko);if(!p)return;
+  showRoute(p.lat,p.lng,nm(p));
+}
+// 생활 탭: 숙소 주변 편의점 · 약국 · 주민센터 · 파출소를 카카오 장소 검색으로 실시간 표시
+function loadNear(){
+  if(!ps){renderList();return;}
+  const st=STAYS[S.stay],loc=new kakao.maps.LatLng(st.lat,st.lng),opt={location:loc,radius:1500,sort:kakao.maps.services.SortBy.DISTANCE};
+  const take=(r)=>r.slice(0,3).map(p=>({name:p.place_name,d:(+p.distance||0)/1000}));
+  ps.categorySearch("CS2",(r,s)=>{NEAR.cs=s===kakao.maps.services.Status.OK?take(r):[];renderList();},opt);
+  ps.categorySearch("PM9",(r,s)=>{NEAR.pm=s===kakao.maps.services.Status.OK?take(r):[];renderList();},opt);
+}
+// 경찰청 지구대 · 파출소 주소 → 카카오 주소 검색으로 좌표 (안 되면 이름으로 장소 검색)
+function geocodePolice(){
+  if(!D||!map||geocodePolice.done)return;geocodePolice.done=true;
+  const gc=new kakao.maps.services.Geocoder(),OK=kakao.maps.services.Status.OK;let left=D.police.length;
+  const fin=()=>{if(--left===0){renderList();drawMarkers();}};
+  D.police.forEach(p=>{const m=p.addr.match(/^.*?(?:로|길)\s?\d+(?:-\d+)?(?=\s|$)/),a=m?m[0]:p.addr;
+    gc.addressSearch(a,(r,s)=>{if(s===OK&&r[0]){p.lat=+r[0].y;p.lng=+r[0].x;fin();}
+      else ps.keywordSearch(p.name,(r2,s2)=>{if(s2===OK&&r2[0]){p.lat=+r2[0].y;p.lng=+r2[0].x;}fin();},{location:new kakao.maps.LatLng(37.5925,127.0020),radius:6000});});});
+}
+
+// ---------- 시연판: QR ----------
+async function drawQRs(){
+  let base=location.origin+"/";
+  try{const r=await fetch("/api/info");if(r.ok){const j=await r.json();base=j.lan;}}catch(e){}
+  document.getElementById("lanUrl").textContent="휴대전화 주소: "+base;
+  const mk=(id,q)=>{const el=document.getElementById(id);el.innerHTML="";
+    if(typeof qrcode==="undefined"){el.textContent="(QR 파일 없음)";return;}
+    const g=qrcode(0,"M");g.addData(base+q);g.make();el.innerHTML=g.createImgTag(4,8);};
+  mk("qrA","?stay=a");mk("qrB","?stay=b");mk("qrG","?from=gu");
+}
+
+// ---------- 앱 설치 (틈길 방식) ----------
+let deferred=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;document.getElementById("installBtn").hidden=false;});
+document.getElementById("installBtn").onclick=async()=>{
+  if(deferred){deferred.prompt();deferred=null;return;}
+  document.getElementById("installTipTxt").textContent=T[S.lang].installTip;document.getElementById("installTip").hidden=false;};
+if(/iphone|ipad/i.test(navigator.userAgent)&&!navigator.standalone)document.getElementById("installBtn").hidden=false;
+// 서비스워커는 등록하지 않음: 틈길과 같은 주소(localhost:5173)를 쓰므로 틈길의 서비스워커를 덮어쓰지 않도록 함
+
+// ---------- 이벤트 ----------
+document.getElementById("taxiX").onclick=()=>{document.getElementById("taxi").hidden=true;};
+document.getElementById("lang").onchange=e=>{S.lang=e.target.value;try{localStorage.setItem("sp_lang",S.lang);}catch(_){}render();if(S.tab===0)loadTour();};
+document.getElementById("stayLayer").onchange=e=>{S.showStays=e.target.checked;drawMarkers();};
+document.querySelectorAll("#staySeg button").forEach(b=>b.onclick=()=>{S.stay=b.dataset.stay;S.zone=null;setTimeout(()=>{if(S.tab===0)loadTour();},0);if(!STAYS[S.stay].info&&S.tab===5)S.tab=0;NEAR={cs:undefined,pm:undefined,gov:undefined};render();if(S.tab===3)loadNear();});
+document.querySelectorAll("#wSeg button").forEach(b=>b.onclick=()=>{S.w=b.dataset.w;S.wx=({live:null,good:"temp",rain:"rain",dust:"dust"})[S.w];render();});   // 시나리오를 누르면 해당 항목의 시간대별 보기를 함께 연다
+document.getElementById("demoBtn").onclick=e=>{const a=document.getElementById("app");a.classList.toggle("nodemo");
+  e.currentTarget.setAttribute("aria-pressed",!a.classList.contains("nodemo"));if(map)setTimeout(()=>map.relayout(),50);};
+document.getElementById("demoBtn").setAttribute("aria-pressed",!document.getElementById("app").classList.contains("nodemo"));
+
+render();drawQRs();
+apiGet("/api/dust").then(j=>{DUST=j;if(LIVE)render();});
+apiGet("/api/config").then(j=>{KAKAO_JS_KEY=(j&&j.kakaoJsKey)||"";loadKakao();});
+if(S.tab===0)loadTour();
+// 공공데이터 정리본 · 기상청 실제 예보 불러오기 (없으면 v1처럼 시연 값으로 동작)
+fetch("sp_data.json").then(r=>r.json()).then(j=>{D=j;renderStats();render();geocodePolice();
+  // 서울 열린데이터광장 문화행사 실시간 (실패하면 sp_data.json 의 저장본 그대로)
+  apiGet("/api/events").then(e=>{if(e.ok&&e.events.length){D.events=e.events;D.sources.events=e.src+" · 실시간";render();}});}).catch(()=>{document.getElementById("stats").innerHTML='<span class="note">sp_data.json 을 찾지 못했어요</span>';});
+fetch("/api/weather").then(r=>r.json()).then(j=>{
+  if(j.ok&&j.hours&&j.hours.length){LIVE=j;document.querySelector('#wSeg [data-w="live"]').hidden=false;S.w="live";S.wx=null;render();}
+  else document.getElementById("wNote").textContent="실제 예보 미연결 · 시연 값 ("+(j.reason||"")+")";
+}).catch(()=>{document.getElementById("wNote").textContent="실제 예보 미연결 · 시연 값";});
+</script>
+</body>
+</html>

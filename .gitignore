@@ -1,0 +1,27 @@
+# API 키 — 깃허브에 절대 올리지 않는다
+.env
+.env.*
+
+# 내 컴퓨터에서만 쓰는 것
+.claude/settings.local.json
+.vercel/
+node_modules/
+
+# 깃허브에는 배포할 서비스만 올린다 — Claude 작업용 파일·팀 내부 문서는 올리지 않는다
+.claude/
+CLAUDE.md
+docs/기획서/
+docs/디자인시스템/
+frontend-design_최신판/
+
+# 운영체제가 저절로 만드는 파일
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 파이썬이 저절로 만드는 파일
+__pycache__/
+*.pyc
+
+# 이름이 .env 로 끝나는 복사본도 막기
+*.env
