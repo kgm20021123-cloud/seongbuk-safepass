@@ -196,7 +196,14 @@ html,body{overflow-x:clip}
 .mtype button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:9px;border-left:3px solid #1E7BE6;border-bottom:3px solid #1E7BE6;transform:translate(-50%,-70%) rotate(-45deg)}
 .myloc{width:44px;height:44px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.22);cursor:pointer;display:grid;place-items:center}
 .myloc svg{width:22px;height:22px;fill:none;stroke:var(--giwa);stroke-width:2;stroke-linecap:round}
-.myloc.on svg{stroke:#1E7BE6}.myloc.busy svg{animation:spin 1s linear infinite}
+.myloc.on svg{stroke:#1E7BE6}
+.rvbtn.on{background:#1E7BE6}.rvbtn.on svg{stroke:#fff}
+.rvbox{position:absolute;inset:0;z-index:9;background:#000}
+.rvbox[hidden]{display:none}
+#rvView{position:absolute;inset:0}
+.rv-top{position:absolute;z-index:2;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(rgba(0,0,0,.55),transparent);color:#fff;font-weight:700;font-size:14px}
+.rv-x{width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:var(--giwa);font-size:24px;cursor:pointer}
+@media(max-width:950px){.rvbox{position:fixed;z-index:85;bottom:calc(58px + env(safe-area-inset-bottom))}body.rvopen .sosbtn{z-index:88;right:auto;left:12px}}.myloc.busy svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .me-dot{width:16px;height:16px;border-radius:50%;background:#1E7BE6;border:3px solid #fff;box-shadow:0 0 0 6px rgba(30,123,230,.22),0 1px 4px rgba(0,0,0,.4)}
 .maptoast{position:absolute;z-index:8;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--giwa);color:#fff;font-size:13px;padding:8px 14px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
@@ -510,7 +517,7 @@ html.hicon a{text-decoration:underline}html.hicon .chip{border:1px solid #000}
     <div class="foot" id="foot"></div>
   </aside>
 
-  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div><div class="mapchips" id="mapchips"></div><div class="mapctl" id="mapctl" hidden><div class="mtype" id="mtype"></div><button type="button" class="myloc" id="myloc" onclick="myLocation()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button></div><div class="maptoast" id="maptoast" hidden></div><div class="pcard" id="pcard" hidden role="dialog"></div></section>
+  <section id="map"><div class="mapmsg" id="mapmsg"></div><div id="kakaoMap"></div><div class="mapchips" id="mapchips"></div><div class="mapctl" id="mapctl" hidden><div class="mtype" id="mtype"></div><button type="button" class="myloc" id="myloc" onclick="myLocation()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg></button><button type="button" class="myloc rvbtn" id="rvbtn" onclick="toggleRvMode()"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><path d="M12 8v6M9 21l3-7 3 7M8 11h8"/></svg></button></div><div class="maptoast" id="maptoast" hidden></div><div class="pcard" id="pcard" hidden role="dialog"></div><div class="rvbox" id="rvbox" hidden><div id="rvView"></div><div class="rv-top"><span id="rvTitle"></span><button type="button" class="rv-x" onclick="closeRv()" aria-label="close">×</button></div></div></section>
 
   <aside class="demo" id="demoPanel" aria-label="시연 조작판">
     <div class="demo-tog-row"><button type="button" class="demo-tog" onclick="const d=document.getElementById('demoPanel');d.classList.toggle('fold');this.textContent=d.classList.contains('fold')?'시연 패널 펼치기 ▾':'시연 패널 접기 ▴'">시연 패널 접기 ▴</button></div>
@@ -1413,7 +1420,7 @@ function renderList0(){
       <span class="no" style="background:${s.indoor?"var(--ok)":"var(--warn)"}">${i+1}</span>
       <h3>${esc(nm(s))}${S.lang==="ko"?"":`<span class="orig">${esc(s.ko)}</span>`}${sayBtn(s.ko,"ko",V().sayKo)}</h3><span class="d">${fmt(s.dist)}</span>
       <div class="meta"><span class="chip ${s.indoor?"in":"out"}">${s.indoor?t.indoor:t.outdoor}</span>${SLOPE.has(s.ko)?`<span class="chip slope">${esc(V().slope)}</span>`:""}${s.gu==="jn"?`<span class="chip ext">${t.outside}</span>`:""}${s.gu==="bd"?`<span class="chip bd">${esc(u.border)}</span>`:""}${esc(s.d[S.lang])}${sayBtn(s.d[S.lang],S.lang)}</div>
-      <div class="hrs"><span class="chip ${o.cls}">${esc(o.txt)}</span>${o.line?`<span>${esc(o.line)}</span>`:""}${s.tel?`<span>☎ ${s.tel}</span>`:""}${s.src==="gu"?srcLink(s.key):`<span class="note">${esc(u.other)}</span>`}${walkLink(s.ko,s.lat,s.lng)}${skBtn({place:s.ko,placeT:nm(s),addr:s.addr||""})}${wrongBtn(s.ko)}</div>
+      <div class="hrs"><span class="chip ${o.cls}">${esc(o.txt)}</span>${o.line?`<span>${esc(o.line)}</span>`:""}${s.tel?`<span>☎ ${s.tel}</span>`:""}${s.src==="gu"?srcLink(s.key):`<span class="note">${esc(u.other)}</span>`}${walkLink(s.ko,s.lat,s.lng)}${skBtn({place:s.ko,placeT:nm(s),addr:s.addr||""})}${map?rvBtn(s.lat,s.lng,nm(s)):""}${wrongBtn(s.ko)}</div>
       ${s.addr?`<div class="addr">${esc(s.addr)}</div>`:""}
       ${hyHtml(s.hy)}
       ${eff()!=="good"&&s.indoor&&i===0?`<div class="why">${esc(eff()==="rain"?t.whyRain:t.whyDust)}</div>`:""}</div>`}).join("")+srcLine+tourHtml();
@@ -1655,7 +1662,7 @@ function refineCoords(){
 // 세이프패스 기능 묶음 (팀 프롬프트 P0 ~ P2) — 문자열은 T12 에 4개 언어
 // =====================================================================
 const T12={
- en:{acc:"Accessible toilet",bell:"Emergency bell",sos:"SOS",sosT:"Emergency help",close:"Close",call:"Call",
+ en:{rv:"Road view",rvOn:"Road view on — tap a blue road on the map.",rvNone:"No road view photos near here. Try a spot on a blue line.",rvShot:"Photos taken by Kakao; may be out of date.",acc:"Accessible toilet",bell:"Emergency bell",sos:"SOS",sosT:"Emergency help",close:"Close",call:"Call",
   c112:"Police — crime, theft, a fight, someone following you",c119:"Fire · ambulance — injury, sudden illness, fire (free; interpreters)",
   c1330:"Korea Travel Helpline — interpretation, travel complaints, tourist police (24h)",c120:"Seoul Dasan Call Center — questions about living in Seoul, in foreign languages",
   addrT:"My address in Korean",copy:"Copy",copied:"Copied",showKo:"Show in Korean",noStay:"No stay selected. Use “My location” on the map, or show the place name to someone nearby.",
@@ -1688,7 +1695,7 @@ const T12={
   tSpicy:"spicy",tVeg:"vegetarian?",tPork:"pork",tSea:"seafood",tNut:"nuts",
   wrong:"Wrong info?",wrongT:"What's wrong?",wrongR:["Closed / moved","Wrong hours","Wrong location","Other"],wrongSend:"Send",thanks:"Thank you! (saved on this device only)",
   textSize:"Text size",contrast:"High contrast",slope:"Uphill · many stairs",offline:"You're offline — saved information is shown.",sample:"sample"},
- zh:{acc:"无障碍卫生间",bell:"紧急呼叫铃",sos:"SOS",sosT:"紧急求助",close:"关闭",call:"拨打",
+ zh:{rv:"街景",rvOn:"已开启街景 — 点击地图上的蓝色道路。",rvNone:"这附近没有街景照片，请点蓝线上的位置。",rvShot:"照片由 Kakao 拍摄，可能不是最新。",acc:"无障碍卫生间",bell:"紧急呼叫铃",sos:"SOS",sosT:"紧急求助",close:"关闭",call:"拨打",
   c112:"警察 — 犯罪、被盗、打架、被跟踪",c119:"火警 · 急救 — 受伤、突发疾病、火灾（免费，有口译）",
   c1330:"旅游咨询热线 — 口译、旅游投诉、旅游警察（24小时）",c120:"首尔茶山呼叫中心 — 用外语咨询首尔生活问题",
   addrT:"我的地址（韩文）",copy:"复制",copied:"已复制",showKo:"用韩文出示",noStay:"未选择住宿。请用地图上的“我的位置”，或把地点名称给附近的人看。",
@@ -1721,7 +1728,7 @@ const T12={
   tSpicy:"辣",tVeg:"素食?",tPork:"猪肉",tSea:"海鲜",tNut:"坚果",
   wrong:"信息有误？",wrongT:"哪里有误？",wrongR:["已关闭 / 已搬迁","时间不对","位置不对","其他"],wrongSend:"提交",thanks:"谢谢！（仅保存在本设备）",
   textSize:"字号",contrast:"高对比度",slope:"上坡 · 台阶多",offline:"当前离线，显示已保存的信息。",sample:"示例"},
- ja:{acc:"多目的トイレ",bell:"非常ベル",sos:"SOS",sosT:"緊急ヘルプ",close:"閉じる",call:"電話",
+ ja:{rv:"ロードビュー",rvOn:"ロードビュー：地図の青い道をタップしてください。",rvNone:"この近くにはロードビュー写真がありません。青い線の上をタップしてください。",rvShot:"写真は Kakao 撮影で、古い場合があります。",acc:"多目的トイレ",bell:"非常ベル",sos:"SOS",sosT:"緊急ヘルプ",close:"閉じる",call:"電話",
   c112:"警察 — 犯罪、盗難、けんか、つきまとい",c119:"消防・救急 — けが、急病、火事（無料・通訳あり）",
   c1330:"観光通訳案内 — 通訳、旅行の苦情、観光警察（24時間）",c120:"ソウル茶山コールセンター — ソウル生活の相談を外国語で",
   addrT:"宿泊先の住所（韓国語）",copy:"コピー",copied:"コピーしました",showKo:"韓国語で見せる",noStay:"宿泊先が選ばれていません。地図の「現在地」を使うか、近くの人に場所の名前を見せてください。",
@@ -1754,7 +1761,7 @@ const T12={
   tSpicy:"辛い",tVeg:"ベジ?",tPork:"豚肉",tSea:"魚介",tNut:"ナッツ",
   wrong:"情報がちがう？",wrongT:"どこがちがいますか？",wrongR:["閉店・移転","時間がちがう","場所がちがう","その他"],wrongSend:"送る",thanks:"ありがとうございます！（この端末にだけ保存）",
   textSize:"文字サイズ",contrast:"ハイコントラスト",slope:"上り坂・階段が多い",offline:"オフラインです。保存した情報を表示しています。",sample:"サンプル"},
- ko:{acc:"장애인 화장실",bell:"비상벨",sos:"SOS",sosT:"긴급 도움",close:"닫기",call:"전화",
+ ko:{rv:"로드뷰",rvOn:"로드뷰 켜짐 — 지도의 파란 길을 눌러 보세요.",rvNone:"이 근처에는 로드뷰 사진이 없어요. 파란 선 위를 눌러 보세요.",rvShot:"카카오가 찍은 사진이라 지금과 다를 수 있어요.",acc:"장애인 화장실",bell:"비상벨",sos:"SOS",sosT:"긴급 도움",close:"닫기",call:"전화",
   c112:"경찰 — 범죄, 도난, 싸움, 누가 따라올 때",c119:"화재 · 구급 — 다쳤을 때, 갑자기 아플 때, 불 (무료, 통역 가능)",
   c1330:"관광통역안내 — 통역, 관광 불편 신고, 관광경찰 연결 (24시간)",c120:"120 다산콜센터 — 서울 생활 문의를 외국어로",
   addrT:"내 숙소 주소 (한국어)",copy:"복사",copied:"복사됨",showKo:"한국어로 보여 주기",noStay:"숙소가 선택되지 않았어요. 지도의 「내 위치」를 쓰거나, 장소 이름을 주변 사람에게 보여 주세요.",
@@ -2092,8 +2099,9 @@ function pcItem(p,big){
   const name=showKo()?esc(p.place_name):withRoman(p.place_name);
   return `<div class="pc-it${big?" big":""}"><div class="pc-h"><b>${name}</b>${pcat(p.category_group_code)?`<span class="chip">${esc(pcat(p.category_group_code))}</span>`:""}</div>
     <small>${esc(p.road_address_name||p.address_name)} · ${d} ${esc(v.away)}${p.phone?` · <a href="tel:${p.phone.replace(/[^0-9]/g,"")}">${esc(p.phone)}</a>`:""}</small>
-    ${big?`<div class="pc-act"><a href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)}</a><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.place_name).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(p.place_name,p.lat,p.lng)}${skBtn({place:p.place_name,addr:p.road_address_name||p.address_name})}${sayBtn(p.place_name,"ko",V().sayKo)}</div>`:`<a class="pc-more" href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)} ↗</a>`}</div>`;
+    ${big?`<div class="pc-act"><a href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)}</a><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.place_name).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(p.place_name,p.lat,p.lng)}${skBtn({place:p.place_name,addr:p.road_address_name||p.address_name})}${sayBtn(p.place_name,"ko",V().sayKo)}${rvBtn(p.lat,p.lng,p.place_name)}</div>`:`<a class="pc-more" href="${esc(p.place_url)}" target="_blank" rel="noopener">${esc(v.kakao)} ↗</a>`}</div>`;
 }
+const rvBtn=(lat,lng,name)=>`<button type="button" class="rbtn" onclick="event.stopPropagation();openRv(${lat},${lng},'${esc(String(name||"")).replace(/'/g,"")}')">${esc(V().rv)}</button>`;
 function pcRoute(lat,lng,label){closePlaceCard();showRoute(lat,lng,label);}
 function renderPlaceCard(){
   const el=document.getElementById("pcard"),v=T11[S.lang];if(!PC){el.hidden=true;return;}
@@ -2101,14 +2109,14 @@ function renderPlaceCard(){
   if(PC.custom){const p=PC.custom,d=p.dm<1000?Math.round(p.dm)+" m":(p.dm/1000).toFixed(1)+" km";
     el.innerHTML=h+`<div class="pc-it big"><div class="pc-h"><b>${showKo()?esc(p.name):withRoman(p.name)}</b><span class="chip">${esc(V().layers[["sight","toilet","wifi","safe","food"].indexOf(p.k)])}</span></div>
       ${p.addr?`<small>${esc(p.addr)}</small>`:""}${p.note?`<small>${esc(trOpen(p.note))}</small>`:""}<small>${d} · ${esc(wkTxt(p.dm/1000))} ${esc(ME?V().fromMe:V().fromStay)}</small>${p.tel?`<small><a href="tel:${p.tel.replace(/[^0-9]/g,"")}">${esc(p.tel)}</a></small>`:""}
-      <div class="pc-act"><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.name).replace(/'/g,"")}')">${esc(v.route)}</button>${routeBtn(p.name,p.lat,p.lng)}${skBtn({place:p.name,addr:p.addr||""})}${sayBtn(p.name,"ko",V().sayKo)}</div></div>`;el.hidden=false;return;}
+      <div class="pc-act"><button type="button" onclick="pcRoute(${p.lat},${p.lng},'${esc(p.name).replace(/'/g,"")}')">${esc(v.route)}</button>${routeBtn(p.name,p.lat,p.lng)}${skBtn({place:p.name,addr:p.addr||""})}${sayBtn(p.name,"ko",V().sayKo)}${rvBtn(p.lat,p.lng,p.name)}</div></div>`;el.hidden=false;return;}
   if(PC.loading)h+=`<p class="note">${esc(v.loading)}</p>`;
   else{
     if(PC.hit)h+=pcItem(PC.hit,true);
     else{
       h+=`<div class="pc-it big"><div class="pc-h"><b>${esc(PC.bld||PC.road||PC.jibun||v.here)}</b><span class="chip">${esc(v.here)}</span></div>
         ${PC.road?`<small>${esc(v.road)} ${esc(PC.road)}</small>`:""}${PC.jibun?`<small>${esc(v.jibun)} ${esc(PC.jibun)}</small>`:""}
-        <div class="pc-act"><button type="button" onclick="pcRoute(${PC.at.lat},${PC.at.lng},'${esc(PC.bld||PC.road||v.here).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(PC.road||PC.jibun||v.here,PC.at.lat,PC.at.lng)}</div></div>`;
+        <div class="pc-act"><button type="button" onclick="pcRoute(${PC.at.lat},${PC.at.lng},'${esc(PC.bld||PC.road||v.here).replace(/'/g,"")}')">${esc(v.route)}</button>${walkLink(PC.road||PC.jibun||v.here,PC.at.lat,PC.at.lng)}${rvBtn(PC.at.lat,PC.at.lng,PC.bld||PC.road||"")}</div></div>`;
     }
     if(PC.inBld.length)h+=`<p class="pc-sec">${esc(v.inBld)}</p>`+PC.inBld.map(p=>pcItem(p,false)).join("");
     if(PC.rest.length)h+=`<p class="pc-sec">${esc(v.near)}</p>`+PC.rest.map(p=>pcItem(p,false)).join("");
@@ -2145,9 +2153,26 @@ function myLocation(){
     if(km(STAYS[S.stay],{lat:p.coords.latitude,lng:p.coords.longitude})>20)mapToast(v.meFar);
   },e=>{btn.classList.remove("busy");mapToast(e.code===1?v.meDenied:v.meErr);},{enableHighAccuracy:true,timeout:8000,maximumAge:60000});
 }
+// ---------- 로드뷰 (카카오 Roadview · 같은 JavaScript 키) ----------
+let RV=null,RVC=null,rvOverlay=null,RVMODE=false;
+function toggleRvMode(){if(!map)return;RVMODE=!RVMODE;
+  if(!rvOverlay)rvOverlay=new kakao.maps.RoadviewOverlay();rvOverlay.setMap(RVMODE?map:null);   // 파란 선 = 로드뷰가 있는 길
+  const b=document.getElementById("rvbtn");b.classList.toggle("on",RVMODE);b.setAttribute("aria-pressed",RVMODE);
+  if(RVMODE){closePlaceCard();mapToast(V().rvOn);}}
+function openRv(lat,lng,title){
+  const v=V();RVC=RVC||new kakao.maps.RoadviewClient();const pos=new kakao.maps.LatLng(lat,lng);
+  RVC.getNearestPanoId(pos,60,id=>{
+    if(!id){mapToast(v.rvNone);return;}
+    const box=document.getElementById("rvbox");box.hidden=false;document.body.classList.add("rvopen");document.getElementById("rvTitle").textContent=(title?title+" · ":"")+v.rv;
+    if(!RV)RV=new kakao.maps.Roadview(document.getElementById("rvView"));
+    RV.setPanoId(id,pos);requestAnimationFrame(()=>RV.relayout());
+    mapToast(v.rvShot);});
+}
+function closeRv(){document.getElementById("rvbox").hidden=true;document.body.classList.remove("rvopen");}
 function initMapExtras(){
   document.getElementById("mapctl").hidden=false;setMapType(MAPTYPE);
-  kakao.maps.event.addListener(map,"click",e=>showPlaceCard(e.latLng));
+  kakao.maps.event.addListener(map,"click",e=>RVMODE?openRv(e.latLng.getLat(),e.latLng.getLng()):showPlaceCard(e.latLng));
+  const b=document.getElementById("rvbtn");if(b){b.setAttribute("aria-label",V().rv);b.title=V().rv;}
 }
 function pinHtml(cls,label,color){return `<div class="pin ${cls}" style="${color?`background:${color}`:""}"><span>${label}</span></div>`;}
 function drawMarkers(){
