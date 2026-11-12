@@ -1462,7 +1462,7 @@ function renderList0(){
       <div class="blk"><h3>${esc(u3.govT)}</h3>
         ${centerHtml()||`<p><b>${esc(u.centerT)}</b> · ${esc(S.lang==="ko"?dg.center.ko:dg.center.en)}${dg.center.addr?` · ${esc(dg.center.addr)}`:""} · ☎ ${dg.center.tel}</p>`}
         <p class="sec" style="margin-left:0">${esc(u3.policeT)}</p>${polHtml}<p class="note">${esc(u3.call112)}</p></div>
-      <div class="blk"><h3>${esc(u3.toiletT)}</h3>${near(D.toilets,3).map(p=>`<div class="near"><span>${withRoman(p.name)}<small>${esc(trOpen(p.open))}${p.addr?" · "+esc(p.addr):""}</small></span><span>${fmt(p.d)}</span></div>`).join("")}</div>
+      <div class="blk"><h3>${esc(u3.toiletT)}</h3>${near(D.toilets,3).map(p=>`<div class="near"><span>${withRoman(p.name)}<small>${esc(trOpen(p.open))}${p.addr?" · "+esc(p.addr):""}${p.accessible?` · <b>♿ ${esc(V().acc)}</b>`:""}${p.bell?` · 🔔 ${esc(V().bell)}`:""}</small></span><span>${fmt(p.d)}</span></div>`).join("")}</div>
       <div class="blk"><h3>${esc(u3.wifiT)}</h3>${near(D.wifi,3).map(p=>`<div class="near"><span>${withRoman(p.name)} <span class="chip ${p.indoor?"in":"out"}">${p.indoor?t.indoor:t.outdoor}</span><small>${esc(p.addr)}</small></span><span>${fmt(p.d)}</span></div>`).join("")}</div>
       <div class="blk"><h3>${esc(t.cs)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("cs")}</div>
       <div class="blk"><h3>${esc(t.pm)} <span class="tag live">${esc(t.live)}</span></h3>${nearHtml("pm")}</div>
@@ -1655,7 +1655,7 @@ function refineCoords(){
 // 세이프패스 기능 묶음 (팀 프롬프트 P0 ~ P2) — 문자열은 T12 에 4개 언어
 // =====================================================================
 const T12={
- en:{sos:"SOS",sosT:"Emergency help",close:"Close",call:"Call",
+ en:{acc:"Accessible toilet",bell:"Emergency bell",sos:"SOS",sosT:"Emergency help",close:"Close",call:"Call",
   c112:"Police — crime, theft, a fight, someone following you",c119:"Fire · ambulance — injury, sudden illness, fire (free; interpreters)",
   c1330:"Korea Travel Helpline — interpretation, travel complaints, tourist police (24h)",c120:"Seoul Dasan Call Center — questions about living in Seoul, in foreign languages",
   addrT:"My address in Korean",copy:"Copy",copied:"Copied",showKo:"Show in Korean",noStay:"No stay selected. Use “My location” on the map, or show the place name to someone nearby.",
@@ -1688,7 +1688,7 @@ const T12={
   tSpicy:"spicy",tVeg:"vegetarian?",tPork:"pork",tSea:"seafood",tNut:"nuts",
   wrong:"Wrong info?",wrongT:"What's wrong?",wrongR:["Closed / moved","Wrong hours","Wrong location","Other"],wrongSend:"Send",thanks:"Thank you! (saved on this device only)",
   textSize:"Text size",contrast:"High contrast",slope:"Uphill · many stairs",offline:"You're offline — saved information is shown.",sample:"sample"},
- zh:{sos:"SOS",sosT:"紧急求助",close:"关闭",call:"拨打",
+ zh:{acc:"无障碍卫生间",bell:"紧急呼叫铃",sos:"SOS",sosT:"紧急求助",close:"关闭",call:"拨打",
   c112:"警察 — 犯罪、被盗、打架、被跟踪",c119:"火警 · 急救 — 受伤、突发疾病、火灾（免费，有口译）",
   c1330:"旅游咨询热线 — 口译、旅游投诉、旅游警察（24小时）",c120:"首尔茶山呼叫中心 — 用外语咨询首尔生活问题",
   addrT:"我的地址（韩文）",copy:"复制",copied:"已复制",showKo:"用韩文出示",noStay:"未选择住宿。请用地图上的“我的位置”，或把地点名称给附近的人看。",
@@ -1721,7 +1721,7 @@ const T12={
   tSpicy:"辣",tVeg:"素食?",tPork:"猪肉",tSea:"海鲜",tNut:"坚果",
   wrong:"信息有误？",wrongT:"哪里有误？",wrongR:["已关闭 / 已搬迁","时间不对","位置不对","其他"],wrongSend:"提交",thanks:"谢谢！（仅保存在本设备）",
   textSize:"字号",contrast:"高对比度",slope:"上坡 · 台阶多",offline:"当前离线，显示已保存的信息。",sample:"示例"},
- ja:{sos:"SOS",sosT:"緊急ヘルプ",close:"閉じる",call:"電話",
+ ja:{acc:"多目的トイレ",bell:"非常ベル",sos:"SOS",sosT:"緊急ヘルプ",close:"閉じる",call:"電話",
   c112:"警察 — 犯罪、盗難、けんか、つきまとい",c119:"消防・救急 — けが、急病、火事（無料・通訳あり）",
   c1330:"観光通訳案内 — 通訳、旅行の苦情、観光警察（24時間）",c120:"ソウル茶山コールセンター — ソウル生活の相談を外国語で",
   addrT:"宿泊先の住所（韓国語）",copy:"コピー",copied:"コピーしました",showKo:"韓国語で見せる",noStay:"宿泊先が選ばれていません。地図の「現在地」を使うか、近くの人に場所の名前を見せてください。",
@@ -1754,7 +1754,7 @@ const T12={
   tSpicy:"辛い",tVeg:"ベジ?",tPork:"豚肉",tSea:"魚介",tNut:"ナッツ",
   wrong:"情報がちがう？",wrongT:"どこがちがいますか？",wrongR:["閉店・移転","時間がちがう","場所がちがう","その他"],wrongSend:"送る",thanks:"ありがとうございます！（この端末にだけ保存）",
   textSize:"文字サイズ",contrast:"ハイコントラスト",slope:"上り坂・階段が多い",offline:"オフラインです。保存した情報を表示しています。",sample:"サンプル"},
- ko:{sos:"SOS",sosT:"긴급 도움",close:"닫기",call:"전화",
+ ko:{acc:"장애인 화장실",bell:"비상벨",sos:"SOS",sosT:"긴급 도움",close:"닫기",call:"전화",
   c112:"경찰 — 범죄, 도난, 싸움, 누가 따라올 때",c119:"화재 · 구급 — 다쳤을 때, 갑자기 아플 때, 불 (무료, 통역 가능)",
   c1330:"관광통역안내 — 통역, 관광 불편 신고, 관광경찰 연결 (24시간)",c120:"120 다산콜센터 — 서울 생활 문의를 외국어로",
   addrT:"내 숙소 주소 (한국어)",copy:"복사",copied:"복사됨",showKo:"한국어로 보여 주기",noStay:"숙소가 선택되지 않았어요. 지도의 「내 위치」를 쓰거나, 장소 이름을 주변 사람에게 보여 주세요.",
@@ -2268,6 +2268,10 @@ if(S.tab===0)loadTour();
 // 공공데이터 정리본 · 기상청 실제 예보 불러오기 (없으면 v1처럼 시연 값으로 동작)
 fetch("sp_data.json").then(r=>r.json()).then(j=>{D=j;renderStats();render();geocodePolice();
   if((qs.has("stay")||qs.has("from"))&&!lsGet("sp_onb",0)&&!qs.has("noguide"))onbOpen();   // QR로 처음 들어온 사람만
+  // 공공와이파이: 서울 열린데이터광장 실시간 (성북구 + 종로구) → 실패하면 저장본 그대로
+  apiGet("/api/wifi").then(w=>{if(w&&w.ok&&w.rows&&w.rows.length){D.wifi=w.rows;D.sources.wifi=w.src;render();}});
+  // 공중화장실: 서울 열린데이터광장 실시간 (성북구 + 종로구, 개방시간 · 장애인 화장실 · 비상벨)
+  apiGet("/api/toilets").then(w=>{if(w&&w.ok&&w.rows&&w.rows.length){D.toilets=w.rows;D.sources.toilets=w.src;render();}});
   // 서울 열린데이터광장 문화행사 실시간 (실패하면 sp_data.json 의 저장본 그대로)
   apiGet("/api/events").then(e=>{if(e.ok&&e.events.length){D.events=e.events;D.sources.events=e.src+" · 실시간";}if(e.ok&&e.seoul){D.seoul=e.seoul;}if(e.ok)render();});}).catch(()=>{document.getElementById("stats").innerHTML='<span class="note">sp_data.json 을 찾지 못했어요</span>';});
 fetch("/api/weather").then(r=>r.json()).then(j=>{

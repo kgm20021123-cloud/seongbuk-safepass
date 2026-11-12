@@ -526,8 +526,98 @@ def safety(q):
     return cached("safety:" + name, 6 * 3600, go)
 
 
+# ---------- 공공와이파이 (서울 열린데이터광장 TbPublicWifiInfo · WGS84 · 공공누리 1유형) ----------
+# 숙소가 종로구 경계라 성북구 + 종로구를 받는다. 실패하면 화면은 sp_data.json 저장본 그대로
+WIFI_GU = ["성북구", "종로구"]
+
+
+def wifi(q):
+    key, svc = env("seoulOpenDataKey"), env("seoulWifiApi", "TbPublicWifiInfo")
+    if not key:
+        return {"ok": False, "reason": ".env 에 seoulOpenDataKey 가 없습니다"}
+
+    def page(gu, a, b):
+        url = f"http://openapi.seoul.go.kr:8088/{quote(key)}/json/{svc}/{a}/{b}/{quote(gu)}/"
+        return get_json(url, timeout=10).get(svc, {})
+
+    def one_gu(gu):
+        first = page(gu, 1, 1000)
+        total = int(first.get("list_total_count", 0) or 0)
+        rows = list(first.get("row", []))
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for part in ex.map(lambda a: page(gu, a, a + 999), range(1001, total + 1, 1000)):
+                rows += part.get("row", [])
+        return rows
+
+    def go():
+        try:
+            with ThreadPoolExecutor(max_workers=2) as ex:
+                rows = [r for part in ex.map(one_gu, WIFI_GU) for r in part]
+        except Exception as e:
+            return {"ok": False, "reason": f"서울 공공와이파이 호출 실패: {e}"}
+        out, seen = [], set()
+        for r in rows:
+            lat, lng = _num(r.get("LAT")), _num(r.get("LNT"))
+            if lat and lng and lat > 100:      # 위 · 경도가 바뀌어 들어온 줄 대비
+                lat, lng = lng, lat
+            if not (lat and 37 < lat < 38 and lng and 126 < lng < 128):
+                continue
+            k = (round(lat, 5), round(lng, 5), r.get("X_SWIFI_MAIN_NM", ""))
+            if k in seen:
+                continue
+            seen.add(k)
+            out.append({"name": r.get("X_SWIFI_MAIN_NM", ""), "addr": " ".join(x for x in [r.get("X_SWIFI_ADRES1", ""), r.get("X_SWIFI_ADRES2", "")] if x).strip(),
+                        "indoor": "실내" in str(r.get("X_SWIFI_INOUT_DOOR", "")), "gu": r.get("X_SWIFI_WRDOFC", ""), "lat": lat, "lng": lng})
+        return {"ok": True, "count": len(out), "rows": out,
+                "src": f"서울 열린데이터광장 서울시 공공와이파이 서비스 위치 정보 (OA-20883, 공공누리 1유형) · {datetime.now(KST):%Y-%m-%d} 받음"}
+
+    return cached("wifi", 24 * 3600, go)
+
+
+# ---------- 공중화장실 (서울 열린데이터광장 mgisToiletPoi · OA-22586 · WGS84 · 공공누리 1유형) ----------
+TOILET_GU = {"성북구", "종로구"}
+
+
+def _clean(v):
+    return " · ".join(x.strip() for x in str(v or "").split("|") if x.strip() and x.strip() != "기타")
+
+
+def toilets(q):
+    key, svc = env("seoulOpenDataKey"), env("seoulToiletApi", "mgisToiletPoi")
+    if not key:
+        return {"ok": False, "reason": ".env 에 seoulOpenDataKey 가 없습니다"}
+
+    def page(a):
+        return get_json(f"http://openapi.seoul.go.kr:8088/{quote(key)}/json/{svc}/{a}/{a + 999}/", timeout=10).get(svc, {})
+
+    def go():
+        try:
+            first = page(1)
+            total = int(first.get("list_total_count", 0) or 0)
+            rows = list(first.get("row", []))
+            with ThreadPoolExecutor(max_workers=6) as ex:
+                for part in ex.map(page, range(1001, total + 1, 1000)):
+                    rows += part.get("row", [])
+        except Exception as e:
+            return {"ok": False, "reason": f"서울 공중화장실 호출 실패: {e}"}
+        out = []
+        for r in rows:
+            if r.get("GU_NAME") not in TOILET_GU:
+                continue
+            lng, lat = _num(r.get("COORD_X")), _num(r.get("COORD_Y"))
+            if not (lat and 37 < lat < 38 and lng and 126 < lng < 128):
+                continue
+            out.append({"name": (r.get("CONTS_NAME") or "").strip(), "addr": (r.get("ADDR_NEW") or r.get("ADDR_OLD") or "").replace("서울특별시 ", ""),
+                        "open": _clean(r.get("VALUE_02")), "gu": r.get("GU_NAME", ""), "lat": lat, "lng": lng,
+                        "accessible": bool(_clean(r.get("VALUE_05"))), "bell": "비상벨" in str(r.get("VALUE_07", ""))})
+        return {"ok": True, "count": len(out), "rows": out,
+                "src": f"서울 열린데이터광장 서울시 공중화장실 위치정보 (OA-22586, 공공누리 1유형) · {datetime.now(KST):%Y-%m-%d} 받음"}
+
+    return cached("toilets", 24 * 3600, go)
+
+
 ROUTES = {
-    "safety": safety,"config": config, "weather": weather, "dust": dust, "translate": translate, "models": ai_models, "data": data, "events": events, "tour": tour, "walk": walk}
+    "safety": safety, "wifi": wifi, "toilets": toilets,"config": config, "weather": weather, "dust": dust, "translate": translate, "models": ai_models, "data": data, "events": events, "tour": tour, "walk": walk}
 
 
 def respond(name, q):
